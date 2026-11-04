@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: uzex-agent
+  config:
+    import: optional:file:.env[.properties]
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:${DB_PORT:55432}/${POSTGRES_DB:uzex}
+    username: ${AGENT_DB_USER:uzex_agent}
+    password: ${AGENT_DB_PASSWORD:}
+    hikari:
+      read-only: true
+      maximum-pool-size: 12
+      connection-timeout: 5000
+      initialization-fail-timeout: -1
+  ai:
+    openai:
+      api-key: ${LLM_API_KEY:replace-me}
+      base-url: ${LLM_BASE_URL:https://api.deepseek.com}
+      chat:
+        model: ${LLM_MODEL:deepseek-flash}
+        temperature: 0
+        max-retries: 1
+        timeout: 40s
+
+server:
+  port: ${APP_PORT:8080}
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+
+agent:
+  model: ${LLM_MODEL:deepseek-flash}
+  api-key: ${LLM_API_KEY:replace-me}
+  disable-thinking: ${LLM_DISABLE_THINKING:true}
+  deadline-seconds: 75
+  repair-budget-seconds: 45
+  max-sql-calls: 8
+  max-rows: 200
+  rows-for-llm: 50
+  sql-timeout-seconds: 15
+  max-concurrent: 8
+  max-question-length: 600
+  requests-per-minute: 30
+  history-turns: 3
+
+logging:
+  level:
+    uz.uzex.agent: INFO

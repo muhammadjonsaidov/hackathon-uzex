@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UZEX Reyestr Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Piazzolla:opsz,wght@8..30,400;8..30,500&display=swap&subset=cyrillic-ext" rel="stylesheet">
+<style>
+:root {
+  --glaze: #EFF4F5;
+  --glaze-deep: #DDE7EA;
+  --ink: #0F1B3D;
+  --ink-soft: #4A5675;
+  --cobalt: #15307A;
+  --cobalt-deep: #0F2460;
+  --cobalt-line: #3A54A0;
+  --on-cobalt: #F2F5FB;
+  --on-cobalt-soft: #B9C5E6;
+  --turquoise: #0B7A80;
+  --saffron: #F4B83F;
+  --madder: #A5342B;
+  --serif: "Piazzolla", Georgia, serif;
+  --sans: "Golos Text", "Segoe UI", Arial, sans-serif;
+  --mono: "JetBrains Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--glaze);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--sans);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  height: 100dvh;
+}
+button, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
+
+/* Asking side */
+.ask { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.masthead {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding: 20px 40px 12px;
+}
+.masthead h1 { margin: 0; font: 500 20px/1.2 var(--serif); color: var(--cobalt); }
+.langs { display: flex; gap: 4px; }
+.langs button {
+  background: none; border: 0; padding: 4px 10px; cursor: pointer; border-radius: 3px;
+  color: var(--ink-soft); font-weight: 500; font-size: 14px;
+}
+.langs button[aria-pressed="true"] { background: var(--cobalt); color: var(--on-cobalt); }
+
+.thread { overflow-y: auto; padding: 12px 40px 24px; scroll-behavior: smooth; }
+.intro { max-width: 34em; padding-top: 6vh; }
+.intro p { margin: 0 0 28px; font: 400 clamp(26px, 3vw, 38px)/1.2 var(--serif); letter-spacing: -0.01em; }
+.examples { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--glaze-deep); }
+.examples button {
+  display: block; width: 100%; padding: 12px 0; background: none; border: 0;
+  border-bottom: 1px solid var(--glaze-deep); text-align: left; cursor: pointer; color: var(--cobalt);
+}
+.examples button:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+
+.turn { padding: 20px 0 24px; border-bottom: 1px solid var(--glaze-deep); max-width: 40em; }
+.turn:last-child { border-bottom: 0; }
+.turn .question { margin: 0 0 10px; color: var(--ink-soft); font-weight: 500; }
+.turn .steps { margin: 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: 15px; }
+.turn .steps li { padding: 2px 0; }
+.turn .steps li:last-child::after { content: "…"; }
+.answer { margin: 0; font: 400 clamp(20px, 1.9vw, 25px)/1.42 var(--serif); white-space: pre-line; }
+.turn.is-error .answer { font: 400 18px/1.5 var(--sans); color: var(--madder); }
+.turn.is-nodata .answer { border-left: 4px solid var(--madder); padding-left: 16px; }
+.turn.is-clarify .answer { border-left: 4px solid var(--saffron); padding-left: 16px; }
+
+.fig {
+  all: unset; cursor: pointer; font-variant-numeric: tabular-nums;
+  background-image: linear-gradient(var(--saffron), var(--saffron));
+  background-repeat: no-repeat; background-position: 0 100%; background-size: 100% 3px;
+  transition: background-size 160ms ease-out;
+}
+.fig:hover, .fig:focus-visible, .fig.is-on { background-size: 100% 100%; }
+.fig:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
+
+.assumptions { margin: 14px 0 0; padding: 0; list-style: none; font-size: 15px; color: var(--ink-soft); }
+.assumptions li { padding: 2px 0; }
+.check { margin: 14px 0 0; font-size: 14px; color: var(--turquoise); font-weight: 500; }
+.check.is-plain { color: var(--ink-soft); font-weight: 400; }
+.turn-actions { margin-top: 10px; }
+.turn-actions button {
+  background: none; border: 0; padding: 0; color: var(--cobalt); cursor: pointer; font-size: 14px;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.turn[aria-current="true"] .turn-actions { display: none; }
+
+.composer { padding: 12px 40px 20px; background: var(--glaze); border-top: 1px solid var(--glaze-deep); }
+.composer form { display: flex; gap: 10px; align-items: flex-end; }
+.composer textarea {
+  flex: 1; min-height: 52px; max-height: 160px; resize: none; padding: 13px 14px;
+  background: #fff; border: 2px solid var(--cobalt); border-radius: 3px; line-height: 1.4;
+}
+.composer textarea::placeholder { color: var(--ink-soft); }
+.composer button {
+  height: 52px; padding: 0 22px; border: 0; border-radius: 3px; cursor: pointer;
+  background: var(--cobalt); color: var(--on-cobalt); font-weight: 600;
+}
+.composer button:hover:not(:disabled) { background: var(--cobalt-deep); }
+.composer button:disabled { opacity: .55; cursor: progress; }
+.notice { margin: 0 0 10px; color: var(--madder); font-size: 14px; }
+
+/* Evidence side: one tile of solid cobalt */
+.proof { background: var(--cobalt); color: var(--on-cobalt); overflow-y: auto; padding: 24px 40px 40px; min-height: 0; }
+.proof h2 { margin: 0 0 20px; font: 500 20px/1.2 var(--serif); }
+.proof .empty { max-width: 28em; color: var(--on-cobalt-soft); }
+.step { margin: 0 0 32px; }
+.step h3 { margin: 0 0 8px; font: 500 16px/1.4 var(--sans); }
+.step .kind { color: var(--on-cobalt-soft); font-weight: 400; font-size: 14px; }
+.step pre {
+  margin: 0 0 12px; padding: 12px 14px; overflow-x: auto; background: var(--cobalt-deep);
+  border-radius: 3px; font: 400 13px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere;
+  color: var(--on-cobalt);
+}
+.step .failed { margin: 0 0 12px; color: var(--saffron); font-size: 14px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-weight: 500; color: var(--on-cobalt-soft); padding: 6px 12px 6px 0; border-bottom: 1px solid var(--cobalt-line); white-space: nowrap; }
+td { padding: 6px 12px 6px 0; border-bottom: 1px solid var(--cobalt-line); vertical-align: top; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+td.is-source { background: var(--saffron); color: var(--ink); box-shadow: -6px 0 0 var(--saffron), 6px 0 0 var(--saffron); }
+td.is-null { color: var(--on-cobalt-soft); }
+.rows-note { margin: 8px 0 0; color: var(--on-cobalt-soft); font-size: 14px; }
+
+@media (max-width: 900px) {
+  html, body { height: auto; }
+  body { display: block; height: auto; }
+  .ask { display: block; }
+  .masthead { padding: 16px 16px 8px; }
+  .thread { overflow: visible; padding: 8px 16px 16px; }
+  .intro { padding-top: 16px; }
+  .composer { position: sticky; bottom: 0; padding: 10px 16px 12px; }
+  .proof { overflow: visible; padding: 24px 16px 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<main class="ask">
+  <header class="masthead">
+    <h1 id="title"></h1>
+    <div class="langs" role="group" aria-label="Til / Язык">
+      <button type="button" data-lang="ru">RU</button>
+      <button type="button" data-lang="uz">UZ</button>
+    </div>
+  </header>
+  <section class="thread" id="thread" aria-live="polite"></section>
+  <div class="composer">
+    <p class="notice" id="notice" hidden></p>
+    <form id="form">
+      <textarea id="input" rows="1" maxlength="600"></textarea>
+      <button type="submit" id="send"></button>
+    </form>
+  </div>
+</main>
+<aside class="proof" id="proof"></aside>
+
+<script>
+const UI = {
+  ru: {
+    title: "Реестр сделок биржи",
+    intro: "Спросите на русском или узбекском о 500 000 сделок за 2022–2026 годы. Ответ строится только на данных, и каждое число можно проверить.",
+    examples: [
+      "Сколько сделок было в 2025 году и сколько из них аннулировано?",
+      "Кто пять крупнейших покупателей хлопка-сырца в 2024 году?",
+      "Какая средневзвешенная цена цемента ЦЕМ I 42,5Н в сентябре 2026 года?",
+      "Какие были сделки по золоту?"
+    ],
+    placeholder: "Ваш вопрос о сделках",
+    send: "Спросить",
+    proof: "На чём основан ответ",
+    proofEmpty: "Здесь появятся запросы к данным и их результаты. Наведите на подчёркнутое число в ответе, чтобы увидеть его ячейку в таблице.",
+    verified: "Все числа и названия в ответе найдены в результатах запроса",
+    fallback: "Показан результат запроса без пересказа: текст модели не прошёл проверку",
+    glossary: "Ответ из описания данных, запрос к данным не нужен",
+    noEvidence: "Запросов к данным для этого ответа не было.",
+    seconds: s => `Ответ за ${s} с`,
+    show: "Показать основание",
+    kinds: { sql: "Запрос", company: "Поиск компании", broker: "Поиск брокера" },
+    rows: (shown, all) => `Показано строк: ${shown} из ${all}`,
+    truncated: "В выборке есть ещё строки.",
+    noRows: "Запрос не вернул строк.",
+    rejected: "Запрос отклонён или завершился ошибкой",
+    noKey: "Ключ языковой модели не задан в .env, поэтому вопросы пока не обрабатываются.",
+    noDb: "База данных недоступна. Запустите docker compose up -d.",
+    failed: "Не удалось получить ответ от сервера. Проверьте соединение и спросите ещё раз."
+  },
+  uz: {
+    title: "Birja bitimlari reyestri",
+    intro: "2022–2026-yillardagi 500 000 ta bitim haqida o‘zbek yoki rus tilida so‘rang. Javob faqat ma’lumotlarga asoslanadi va har bir raqamni tekshirish mumkin.",
+    examples: [
+      "2025-yilda nechta bitim tuzilgan va ulardan nechtasi bekor qilingan?",
+      "2024-yilda paxta xomashyosining eng yirik 5 ta xaridori kim?",
+      "Eksport bitimlarining umumiy summasi qancha?",
+      "Oltin bo‘yicha qanday bitimlar bo‘lgan?"
+    ],
+    placeholder: "Bitimlar haqida savolingiz",
+    send: "So‘rash",
+    proof: "Javob nimaga asoslangan",
+    proofEmpty: "Bu yerda ma’lumotlarga so‘rovlar va ularning natijalari chiqadi. Jadvaldagi katagini ko‘rish uchun javobdagi tagiga chizilgan raqam ustiga olib boring.",
+    verified: "Javobdagi barcha raqam va nomlar so‘rov natijalarida topildi",
+    fallback: "So‘rov natijasi qayta bayon qilinmasdan ko‘rsatildi: model matni tekshiruvdan o‘tmadi",
+    glossary: "Javob ma’lumotlar tavsifidan olingan, so‘rov kerak emas",
+    noEvidence: "Bu javob uchun ma’lumotlarga so‘rov bo‘lmadi.",
+    seconds: s => `Javob ${s} soniyada`,
+    show: "Asosini ko‘rsatish",
+    kinds: { sql: "So‘rov", company: "Kompaniya qidiruvi", broker: "Broker qidiruvi" },
+    rows: (shown, all) => `Ko‘rsatilgan qatorlar: ${shown} / ${all}`,
+    truncated: "Natijada yana qatorlar bor.",
+    noRows: "So‘rov qator qaytarmadi.",
+    rejected: "So‘rov rad etildi yoki xato bilan tugadi",
+    noKey: ".env faylida til modeli kaliti ko‘rsatilmagan, shuning uchun savollar hozircha qayta ishlanmaydi.",
+    noDb: "Ma’lumotlar bazasi mavjud emas. docker compose up -d ni ishga tushiring.",
+    failed: "Serverdan javob olinmadi. Aloqani tekshiring va qayta so‘rang."
+  }
+};
+
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
+const MAX_SHOWN_ROWS = 50;
+/* Identifiers look numeric but are not quantities: no digit grouping, no figure links. */
+const IDENTIFIER_COLUMN = /(^|_)(inn|no|code|year|month|quarter)$/i;
+const turns = [];
+let lang = initialLang();
+let selected = null;
+let busy = false;
+
+function initialLang() {
+  try {
+    const saved = localStorage.getItem("lang");
+    if (saved === "ru" || saved === "uz") return saved;
+  } catch (e) { /* storage may be blocked */ }
+  return (navigator.language || "").startsWith("ru") ? "ru" : "uz";
+}
+
+function setLang(next) {
+  lang = next;
+  try { localStorage.setItem("lang", next); } catch (e) { /* storage may be blocked */ }
+  document.documentElement.lang = next;
+  const t = UI[next];
+  $("title").textContent = t.title;
+  $("input").placeholder = t.placeholder;
+  $("send").textContent = t.send;
+  document.querySelectorAll(".langs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === next)));
+  renderThread();
+  renderProof();
+  loadStatus();
+}
+
+/* Figures: wrap each number of the answer that traces to a result cell. */
+const NUMBER = /(\d{1,3}(?:[    ]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)(\s*(?:тыс\.?|тысяч\S*|ming|минг|млн\.?|миллион\S*|mln\.?|million|млрд\.?|миллиард\S*|mlrd\.?|milliard\S*|трлн\.?|триллион\S*|trln\.?|trillion\S*))?/g;
+
+function scaleOf(word) {
+  if (!word) return 1;
+  const w = word.trim().toLowerCase();
+  if (/^(тыс|ming|минг)/.test(w)) return 1e3;
+  if (/^(млн|миллион|mln|million)/.test(w)) return 1e6;
+  if (/^(млрд|миллиард|mlrd|milliard)/.test(w)) return 1e9;
+  return 1e12;
+}
+
+function matchCells(digits, word, cells) {
+  const compact = digits.replace(/[    ]/g, "").replace(",", ".");
+  const shown = parseFloat(compact);
+  const decimals = (compact.split(".")[1] || "").length;
+  const scale = scaleOf(word);
+  if (scale === 1 && decimals === 0 && (shown <= 12 || (shown >= 2022 && shown <= 2026))) return [];
+  const half = 0.5 * Math.pow(10, -decimals) * scale;
+  return cells.filter(c => Math.abs(c.value - shown * scale) <= half);
+}
+
+function renderAnswer(container, turn) {
+  container.textContent = "";
+  const text = turn.response.answer;
+  const cells = turn.cells || [];
+  let last = 0;
+  for (const m of text.matchAll(NUMBER)) {
+    const before = text[m.index - 1] || "";
+    if (/[\p{L}\-.\d]/u.test(before)) continue;
+    const hits = matchCells(m[1], m[2], cells);
+    if (!hits.length) continue;
+    container.append(text.slice(last, m.index));
+    const figure = el("button", "fig", m[0]);
+    figure.type = "button";
+    const on = () => { selectTurn(turn); light(hits, true); };
+    const off = () => light(hits, false);
+    figure.addEventListener("mouseenter", on);
+    figure.addEventListener("focus", on);
+    figure.addEventListener("mouseleave", off);
+    figure.addEventListener("blur", off);
+    figure.addEventListener("click", () => {
+      on();
+      const first = document.querySelector("td.is-source");
+      if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+    container.append(figure);
+    last = m.index + m[0].length;
+  }
+  container.append(text.slice(last));
+}
+
+function light(hits, on) {
+  hits.forEach(c => {
+    const cell = document.querySelector(`td[data-cell="${c.id}"]`);
+    if (cell) cell.classList.toggle("is-source", on);
+  });
+}
+
+/* Collected once per turn so figures and table cells share ids. */
+function indexCells(turn) {
+  turn.cells = [];
+  (turn.response.evidence || []).forEach((step, s) => {
+    if (step.kind !== "sql" || !step.result) return;
+    step.result.rows.slice(0, MAX_SHOWN_ROWS).forEach((row, r) => row.forEach((value, c) => {
+      if (value !== null && !IDENTIFIER_COLUMN.test(step.result.columns[c]) && /^-?\d+(\.\d+)?$/.test(value)) {
+        turn.cells.push({ id: `${s}-${r}-${c}`, value: parseFloat(value) });
+      }
+    }));
+  });
+}
+
+/* Asking */
+function renderThread() {
+  const thread = $("thread");
+  thread.textContent = "";
+  const t = UI[lang];
+  if (!turns.length) {
+    const intro = el("div", "intro");
+    intro.append(el("p", "", t.intro));
+    const list = el("ul", "examples");
+    t.examples.forEach(q => {
+      const li = el("li");
+      const b = el("button", "", q);
+      b.type = "button";
+      b.addEventListener("click", () => ask(q));
+      li.append(b);
+      list.append(li);
+    });
+    intro.append(list);
+    thread.append(intro);
+    return;
+  }
+  turns.forEach(turn => thread.append(renderTurn(turn)));
+}
+
+function renderTurn(turn) {
+  const t = UI[lang];
+  const node = el("article", "turn");
+  turn.node = node;
+  node.append(el("p", "question", turn.question));
+  if (!turn.response) {
+    const steps = el("ul", "steps");
+    turn.steps.forEach(label => steps.append(el("li", "", label)));
+    node.append(steps);
+    return node;
+  }
+  const r = turn.response;
+  if (r.status === "ERROR") node.classList.add("is-error");
+  if (r.status === "NO_DATA") node.classList.add("is-nodata");
+  if (r.status === "CLARIFY") node.classList.add("is-clarify");
+  if (turn === selected) node.setAttribute("aria-current", "true");
+
+  const answer = el("p", "answer");
+  renderAnswer(answer, turn);
+  node.append(answer);
+
+  if (r.assumptions && r.assumptions.length) {
+    const list = el("ul", "assumptions");
+    r.assumptions.forEach(a => list.append(el("li", "", a)));
+    node.append(list);
+  }
+  const seconds = (r.durationMs / 1000).toFixed(1).replace(".", lang === "ru" ? "," : ".");
+  if (r.status === "GLOSSARY") {
+    node.append(el("p", "check is-plain", `${t.glossary}. ${t.seconds(seconds)}`));
+  } else if (r.source === "FALLBACK") {
+    node.append(el("p", "check is-plain", `${t.fallback}. ${t.seconds(seconds)}`));
+  } else if (r.status === "ANSWER") {
+    node.append(el("p", "check", `✓ ${t.verified}. ${t.seconds(seconds)}`));
+  } else if (r.durationMs) {
+    node.append(el("p", "check is-plain", t.seconds(seconds)));
+  }
+  const actions = el("div", "turn-actions");
+  const show = el("button", "", t.show);
+  show.type = "button";
+  show.addEventListener("click", () => selectTurn(turn));
+  actions.append(show);
+  node.append(actions);
+  return node;
+}
+
+function selectTurn(turn) {
+  if (selected === turn) return;
+  selected = turn;
+  turns.forEach(x => {
+    if (!x.node) return;
+    if (x === turn) x.node.setAttribute("aria-current", "true");
+    else x.node.removeAttribute("aria-current");
+  });
+  renderProof();
+}
+
+/* Evidence */
+function renderProof() {
+  const t = UI[lang];
+  const proof = $("proof");
+  proof.textContent = "";
+  proof.append(el("h2", "", t.proof));
+  if (!selected || !selected.response) {
+    proof.append(el("p", "empty", t.proofEmpty));
+    return;
+  }
+  const evidence = selected.response.evidence || [];
+  if (!evidence.length) {
+    proof.append(el("p", "empty", t.noEvidence));
+    return;
+  }
+  evidence.forEach((step, s) => proof.append(renderStep(step, s, t)));
+}
+
+function renderStep(step, s, t) {
+  const box = el("section", "step");
+  const heading = el("h3");
+  heading.append(el("span", "kind", `${t.kinds[step.kind] || step.kind}: `));
+  heading.append(step.purpose || (step.kind === "sql" ? "" : step.input));
+  box.append(heading);
+  if (step.kind === "sql") box.append(el("pre", "", step.input));
+  if (step.error) {
+    box.append(el("p", "failed", `${t.rejected}: ${step.error}`));
+    return box;
+  }
+  const result = step.result;
+  if (!result || !result.rows.length) {
+    box.append(el("p", "rows-note", t.noRows));
+    return box;
+  }
+  const numeric = result.columns.map((name, c) => !IDENTIFIER_COLUMN.test(name)
+    && result.rows.every(row => row[c] === null || /^-?\d+(\.\d+)?$/.test(row[c])));
+  const table = el("table");
+  const head = el("tr");
+  result.columns.forEach((name, c) => head.append(el("th", numeric[c] ? "num" : "", name)));
+  const thead = el("thead");
+  thead.append(head);
+  const tbody = el("tbody");
+  result.rows.slice(0, MAX_SHOWN_ROWS).forEach((row, r) => {
+    const tr = el("tr");
+    row.forEach((value, c) => {
+      const td = el("td", numeric[c] ? "num" : "", value === null ? "—" : (numeric[c] ? groupDigits(value) : value));
+      if (value === null) td.classList.add("is-null");
+      td.dataset.cell = `${s}-${r}-${c}`;
+      tr.append(td);
+    });
+    tbody.append(tr);
+  });
+  table.append(thead, tbody);
+  const wrap = el("div", "table-wrap");
+  wrap.append(table);
+  box.append(wrap);
+  if (result.rows.length > MAX_SHOWN_ROWS) box.append(el("p", "rows-note", t.rows(MAX_SHOWN_ROWS, result.rows.length)));
+  if (result.truncated) box.append(el("p", "rows-note", t.truncated));
+  return box;
+}
+
+function groupDigits(value) {
+  const [whole, fraction] = value.split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return fraction ? `${grouped}.${fraction}` : grouped;
+}
+
+/* Talking to the server */
+async function ask(question) {
+  if (busy) return;
+  busy = true;
+  $("send").disabled = true;
+  $("input").value = "";
+  resizeInput();
+  const history = turns
+    .filter(x => x.response && x.response.status !== "ERROR")
+    .slice(-3)
+    .map(x => ({ question: x.question, answer: x.response.answer }));
+  const turn = { question, steps: [], response: null };
+  turns.push(turn);
+  renderThread();
+  scrollToEnd();
+  try {
+    const res = await fetch("/api/ask/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+      body: JSON.stringify({ question, history })
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    await readEvents(res.body, (event, data) => {
+      if (event === "step") {
+        turn.steps.push(data.label);
+        renderThread();
+        scrollToEnd();
+      } else if (event === "final") {
+        finish(turn, data);
+      }
+    });
+    if (!turn.response) throw new Error("Stream ended without an answer");
+  } catch (e) {
+    finish(turn, { status: "ERROR", answer: UI[lang].failed, assumptions: [], evidence: [], durationMs: 0 });
+  } finally {
+    busy = false;
+    $("send").disabled = false;
+    $("input").focus();
+  }
+}
+
+function finish(turn, response) {
+  turn.response = response;
+  indexCells(turn);
+  selected = turn;
+  renderThread();
+  renderProof();
+  $("proof").scrollTop = 0;
+  scrollToEnd();
+}
+
+async function readEvents(body, onEvent) {
+  const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) return;
+    buffer += value.replace(/\r\n/g, "\n");
+    let end;
+    while ((end = buffer.indexOf("\n\n")) >= 0) {
+      const chunk = buffer.slice(0, end);
+      buffer = buffer.slice(end + 2);
+      let event = "message";
+      let data = "";
+      chunk.split("\n").forEach(line => {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        if (line.startsWith("data:")) data += line.slice(5);
+      });
+      if (data) onEvent(event, JSON.parse(data));
+    }
+  }
+}
+
+async function loadStatus() {
+  const notice = $("notice");
+  try {
+    const res = await fetch("/api/status");
+    const status = await res.json();
+    const t = UI[lang];
+    const message = !status.database ? t.noDb : (!status.llmConfigured ? t.noKey : "");
+    notice.textContent = message;
+    notice.hidden = !message;
+  } catch (e) {
+    notice.hidden = true;
+  }
+}
+
+function scrollToEnd() {
+  const thread = $("thread");
+  thread.scrollTop = thread.scrollHeight;
+}
+
+function resizeInput() {
+  const input = $("input");
+  input.style.height = "auto";
+  input.style.height = `${Math.min(input.scrollHeight + 4, 160)}px`;
+}
+
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  const q = $("input").value.trim();
+  if (q) ask(q);
+});
+$("input").addEventListener("input", resizeInput);
+$("input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    $("form").requestSubmit();
+  }
+});
+document.querySelectorAll(".langs button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+setLang(lang);
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+.env
+.gradle/
+build/
+.idea/
+*.iml
+.DS_Store
+uzex.db
+uzex_spot_data/
+uzex_spot_data.zip
+evals/results/

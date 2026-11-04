@@ -1,0 +1,83 @@
+# UZEX deals agent
+
+A web service that answers questions about the exchange's 500,000 deals in Russian and Uzbek, using only the published data. Each answer shows the SQL behind it and the result table, and hovering over a figure highlights its source cell.
+
+## Run
+
+You need Java 25, Docker, and a filled-in `.env` (start from `.env.example`). Set `LLM_API_KEY` there.
+
+Start the database. The first start loads the CSVs in about 30 seconds:
+
+```bash
+docker compose up -d --wait db
+```
+
+Start the app, then open http://localhost:8080:
+
+```bash
+./gradlew bootRun
+```
+
+Any OpenAI-compatible API works through `LLM_BASE_URL` and `LLM_MODEL`. If that provider rejects DeepSeek's `thinking` field, set `LLM_DISABLE_THINKING=false`.
+
+To rebuild the database from scratch:
+
+```bash
+docker compose down -v
+```
+
+## Public URL
+
+With `NGROK_AUTHTOKEN` set in `.env`, this starts a tunnel to the app. The address appears at http://localhost:4040:
+
+```bash
+docker compose --profile public up -d tunnel
+```
+
+The machine and the app must stay running for as long as the judges test.
+
+## How an answer is made
+
+1. The LLM reads the question and calls tools: `find_company`, `find_broker` and `run_sql`.
+2. `SqlGuard` accepts one `SELECT` over the published tables only. The database role is read-only and cannot see anything else, so it blocks writes even if the guard is bypassed.
+3. The LLM words the answer from the rows it received.
+4. `AnswerVerifier` checks every number, date and quoted or all-caps name against the tool results. A failed draft gets one repair attempt. If it fails again, the page shows the raw query result instead of the text.
+5. An answer with no query rows behind it becomes "no data".
+
+The data rules live in `db/init/02_model.sql` as precomputed columns, so the LLM selects correct values instead of deriving them:
+
+| Trap in the data | Column or table |
+|---|---|
+| USD and soum amounts | `amount_uzs`, `amount_usd` |
+| Annulled deals never took place | `is_annulled` |
+| Quantity counts lots | `volume`, `volume_tonnes` |
+| 230 seller spellings of 41 products | `product`, `grade`, `class`, `brand`, `size`, `ptype` |
+| Regions named differently across files | `regions` |
+| Near-identical company names | `spelled_key` keeps apostrophes, `loose_key` drops them |
+| A broker on both sides of a deal | `broker_deals` |
+
+## Tests
+
+Unit tests for the SQL guard, the verifier and language detection:
+
+```bash
+./gradlew test
+```
+
+`evals/run_eval.py` holds questions in both languages, with expected answers computed from a separate SQLite copy of the CSVs (`evals/load_oracle.py`) that shares no code with the app. Build that copy once:
+
+```bash
+python3 evals/load_oracle.py
+```
+
+Compare the database model with those answers, without using the LLM:
+
+```bash
+python3 evals/run_eval.py --check-model
+```
+
+With the app running, ask it every question. Results go to `evals/results/latest.json`:
+
+```bash
+python3 evals/run_eval.py
+```
