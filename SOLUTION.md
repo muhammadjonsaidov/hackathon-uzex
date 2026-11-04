@@ -16,7 +16,7 @@ Birja bitimlari bo‘yicha rus va o‘zbek tillarida (lotin va kirill) javob ber
 - Ilova kodini ko‘rmasdan yozilgan 40 ta savoldan iborat ko‘r imtihon. Birinchi o‘tkazishda 39/40. Xatolar tuzatilgach qayta o‘tkazildi: 40/40 (bu savollar endi ko‘r emas, shuning uchun asosiy ko‘rsatkich birinchi natijadir).
 - Javobi yo‘q 10 ta savolning barchasida agent hech narsa o‘ylab topmadi.
 - Har bir javob qo‘lda ham o‘qib chiqildi, shu tarzda avtomatik baholash ko‘rmaydigan xatolar topildi va tuzatildi.
-- Eng sekin javob 7 soniya (cheklov 90 soniya).
+- Oxirgi sinovda eng sekin javob 5,7 soniya (cheklov 90 soniya).
 
 ---
 
@@ -38,4 +38,4 @@ Birja bitimlari bo‘yicha rus va o‘zbek tillarida (lotin va kirill) javob ber
 - Слепой экзамен из 40 вопросов, написанных без доступа к коду приложения. Первый прогон: 39/40. После исправления ошибок повторный прогон: 40/40 (эти вопросы уже не слепые, поэтому честный показатель — первый результат).
 - На всех 10 вопросах без ответа в данных агент ничего не выдумал.
 - Все ответы также прочитаны вручную, что позволило найти и исправить ошибки, которые автоматическая оценка не видит.
-- Самый медленный ответ: 7 секунд (лимит 90 секунд).
+- В последнем прогоне самый медленный ответ: 5,7 секунды (лимит 90 секунд).
