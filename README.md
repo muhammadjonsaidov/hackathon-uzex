@@ -64,7 +64,7 @@ Unit tests for the SQL guard, the verifier and language detection:
 ./gradlew test
 ```
 
-`evals/run_eval.py` holds questions in both languages, with expected answers computed from a separate SQLite copy of the CSVs (`evals/load_oracle.py`) that shares no code with the app. Build that copy once:
+The `evals/` folder is kept locally and is not in git. `evals/run_eval.py` holds questions in both languages, with expected answers computed from a separate SQLite copy of the CSVs (`evals/load_oracle.py`) that shares no code with the app. Build that copy once:
 
 ```bash
 python3 evals/load_oracle.py
