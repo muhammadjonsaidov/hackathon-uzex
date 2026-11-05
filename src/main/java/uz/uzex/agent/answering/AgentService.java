@@ -55,7 +55,7 @@ public class AgentService {
     public AgentResponse ask(String question, List<Turn> history, Lang chatLanguage, ProgressListener progress) {
         long start = System.nanoTime();
         Lang lang = Lang.detect(question, chatLanguage);
-        Trace trace = new Trace();
+        Trace trace = new Trace(step -> progress.evidence(AgentResponse.Evidence.of(step)));
         if (!properties.llmConfigured()) {
             return responses.error(lang.llmError, lang, trace, elapsedMs(start));
         }

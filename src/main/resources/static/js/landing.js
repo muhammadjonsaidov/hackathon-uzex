@@ -1,6 +1,9 @@
 import { $, el } from "./dom.js";
 import { savedLanguage, saveLanguage } from "./language.js";
 
+const PENDING_QUESTION_KEY = "uzex-pending-question";
+const PART_DELAY_MS = 750;
+
 /* The demo shows a real answer and query from the agent, with the figures it returned. */
 const TEXT = {
   ru: {
@@ -8,13 +11,22 @@ const TEXT = {
     signIn: "Войти",
     headline: "Спросите реестр. Ответ придёт с доказательством.",
     lead: "Агент отвечает на русском и узбекском о 500 000 сделок за 2022–2026 годы. Он берёт факты только из данных, показывает запрос с таблицей и прямо говорит, если ответа нет.",
-    start: "Задать вопрос",
+    askLabel: "Ваш вопрос о сделках",
+    askPlaceholder: "Например: кто купил больше всего риса в 2025 году?",
+    start: "Спросить",
+    openChat: "Открыть чат",
+    tryQuestions: [
+      "Сколько бензина продано в 2026 году?",
+      "Какие были сделки по золоту?",
+      "Кто пять крупнейших покупателей хлопка-сырца в 2024 году?"
+    ],
     noSignup: "Регистрация не нужна",
     demoTitle: "Настоящий ответ агента",
     demoQuestion: "Сколько сделок было в 2025 году и сколько из них аннулировано?",
     answer: ["В 2025 году было зарегистрировано ", " сделки, из них аннулировано ", "."],
     demoCheck: "✓ Все числа найдены в результате запроса",
-    demoHint: "Наведите на число в ответе, чтобы увидеть его ячейку.",
+    demoHint: "Наведите на число, чтобы увидеть его ячейку.",
+    replay: "Показать ещё раз",
     stepsTitle: "Как получается ответ",
     step1Title: "Модель пишет запрос",
     step1: "Языковая модель понимает вопрос и составляет SQL. Менять данные она не может: подключение только для чтения.",
@@ -34,13 +46,22 @@ const TEXT = {
     signIn: "Kirish",
     headline: "Reyestrga savol bering. Javob dalili bilan keladi.",
     lead: "Agent 2022–2026-yillardagi 500 000 ta bitim haqida rus va o‘zbek tillarida javob beradi. U faktlarni faqat ma’lumotlardan oladi, so‘rov va jadvalni ko‘rsatadi, javob bo‘lmasa, shuni ochiq aytadi.",
-    start: "Savol berish",
+    askLabel: "Bitimlar haqida savolingiz",
+    askPlaceholder: "Masalan: 2025-yilda eng ko‘p guruchni kim sotib olgan?",
+    start: "So‘rash",
+    openChat: "Chatni ochish",
+    tryQuestions: [
+      "2026-yilda qancha benzin sotilgan?",
+      "Oltin bo‘yicha qanday bitimlar bo‘lgan?",
+      "2024-yilda paxta xomashyosining eng yirik 5 ta xaridori kim?"
+    ],
     noSignup: "Ro‘yxatdan o‘tish shart emas",
     demoTitle: "Agentning haqiqiy javobi",
     demoQuestion: "2025-yilda nechta bitim bo‘lgan va ulardan nechtasi bekor qilingan?",
     answer: ["2025-yilda jami ", " ta bitim ro‘yxatga olingan, ulardan ", " tasi bekor qilingan."],
     demoCheck: "✓ Barcha raqamlar so‘rov natijasida topildi",
-    demoHint: "Katagini ko‘rish uchun javobdagi raqam ustiga olib boring.",
+    demoHint: "Katagini ko‘rish uchun raqam ustiga olib boring.",
+    replay: "Yana ko‘rsatish",
     stepsTitle: "Javob qanday tayyorlanadi",
     step1Title: "Model so‘rov yozadi",
     step1: "Til modeli savolni tushunadi va SQL tuzadi. U ma’lumotlarni o‘zgartira olmaydi: ulanish faqat o‘qish uchun.",
@@ -57,6 +78,9 @@ const TEXT = {
   }
 };
 
+let lang = savedLanguage();
+let timers = [];
+
 function figure(text, cellId) {
   const button = el("button", "fig", text);
   button.type = "button";
@@ -69,7 +93,26 @@ function figure(text, cellId) {
   return button;
 }
 
-function render(lang) {
+/* Hands the question to the chat page, which asks it as soon as it opens. */
+function goAsk(question) {
+  try {
+    if (question) sessionStorage.setItem(PENDING_QUESTION_KEY, question);
+  } catch (e) { /* storage may be blocked: the chat still opens, empty */ }
+  location.assign("/chat");
+}
+
+function renderTryQuestions(t) {
+  $("try").replaceChildren(...t.tryQuestions.map(question => {
+    const li = el("li");
+    const button = el("button", "", question);
+    button.type = "button";
+    button.addEventListener("click", () => goAsk(question));
+    li.append(button);
+    return li;
+  }));
+}
+
+function render() {
   saveLanguage(lang);
   document.documentElement.lang = lang;
   const t = TEXT[lang];
@@ -79,11 +122,42 @@ function render(lang) {
   document.querySelectorAll(".langs button").forEach(button => {
     button.setAttribute("aria-pressed", String(button.dataset.lang === lang));
   });
+  $("ask-input").placeholder = t.askPlaceholder;
+  $("closing-link").textContent = t.openChat;
+  renderTryQuestions(t);
   $("demo-answer").replaceChildren(
     t.answer[0], figure("115 763", "cell-all"), t.answer[1], figure("8 085", "cell-annulled"), t.answer[2]);
 }
 
+/* The page's one moment of motion: the same order the real agent works in. */
+function playDemo() {
+  timers.forEach(clearTimeout);
+  timers = [];
+  const parts = [...document.querySelectorAll(".demo-part")];
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    parts.forEach(part => part.classList.remove("is-waiting"));
+    return;
+  }
+  parts.forEach(part => part.classList.add("is-waiting"));
+  $("demo-answer").classList.remove("is-playing");
+  parts.forEach(part => {
+    timers.push(setTimeout(() => {
+      part.classList.remove("is-waiting");
+      if (part.id === "demo-answer") part.classList.add("is-playing");
+    }, Number(part.dataset.part) * PART_DELAY_MS));
+  });
+}
+
 document.querySelectorAll(".langs button").forEach(button => {
-  button.addEventListener("click", () => render(button.dataset.lang));
+  button.addEventListener("click", () => {
+    lang = button.dataset.lang;
+    render();
+  });
 });
-render(savedLanguage());
+$("ask-box").addEventListener("submit", event => {
+  event.preventDefault();
+  goAsk($("ask-input").value.trim());
+});
+$("replay").addEventListener("click", playDemo);
+render();
+playDemo();

@@ -10,6 +10,7 @@ import uz.uzex.agent.answering.AgentGate;
 import uz.uzex.agent.answering.AgentResponse;
 import uz.uzex.agent.answering.AgentService;
 import uz.uzex.agent.answering.Lang;
+import uz.uzex.agent.answering.ProgressListener;
 import uz.uzex.agent.config.AgentProperties;
 
 /**
@@ -24,6 +25,8 @@ public class ChatAnswerService {
         void chat(ChatSummary chat);
 
         void step(String label);
+
+        void evidence(AgentResponse.Evidence evidence);
 
         void answer(AgentResponse response);
     }
@@ -47,9 +50,23 @@ public class ChatAnswerService {
         Optional<ChatSummary> chat = existing.isPresent() ? existing : startChat(user, lang, question);
         chat.ifPresent(events::chat);
         List<AgentService.Turn> history = chat.map(c -> history(c.id())).orElse(List.of());
-        AgentResponse response = agent.ask(question, history, RUSSIAN.equals(lang) ? Lang.RU : Lang.UZ_LATN, events::step);
+        AgentResponse response = agent.ask(question, history, RUSSIAN.equals(lang) ? Lang.RU : Lang.UZ_LATN, progressTo(events));
         chat.ifPresent(c -> save(c.id(), question, response));
         events.answer(response);
+    }
+
+    private static ProgressListener progressTo(Events events) {
+        return new ProgressListener() {
+            @Override
+            public void step(String label) {
+                events.step(label);
+            }
+
+            @Override
+            public void evidence(AgentResponse.Evidence evidence) {
+                events.evidence(evidence);
+            }
+        };
     }
 
     private static String languageFor(String requested, String question) {

@@ -67,6 +67,10 @@ public class AccountService {
         return target;
     }
 
+    public boolean isGuest(UUID user) {
+        return users.find(user).map(StoredUser::isGuest).orElse(false);
+    }
+
     public Optional<String> usernameOf(UUID user) {
         return users.find(user).map(StoredUser::username);
     }

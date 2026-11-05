@@ -62,8 +62,6 @@ public class AgentResponses {
     }
 
     private static List<AgentResponse.Evidence> evidence(Trace trace) {
-        return trace.steps().stream()
-                .map(s -> new AgentResponse.Evidence(s.kind(), s.input(), s.purpose(), s.result(), s.error()))
-                .toList();
+        return trace.steps().stream().map(AgentResponse.Evidence::of).toList();
     }
 }

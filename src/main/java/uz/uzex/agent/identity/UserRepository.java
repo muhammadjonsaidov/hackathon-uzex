@@ -1,5 +1,8 @@
 package uz.uzex.agent.identity;
 
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -45,6 +48,12 @@ public class UserRepository {
     public void setCredentials(UUID id, String username, String passwordHash) {
         jdbc.sql("UPDATE users SET username = ?, password_hash = ? WHERE id = ?")
                 .params(username, passwordHash, id)
+                .update();
+    }
+
+    public int deleteGuestsOlderThan(Duration age) {
+        return jdbc.sql("DELETE FROM users WHERE username IS NULL AND created_at < ?")
+                .param(Timestamp.from(Instant.now().minus(age)))
                 .update();
     }
 

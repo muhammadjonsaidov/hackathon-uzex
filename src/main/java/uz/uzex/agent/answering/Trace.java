@@ -3,6 +3,7 @@ package uz.uzex.agent.answering;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 import uz.uzex.agent.dataquery.QueryResult;
@@ -20,9 +21,20 @@ public final class Trace {
     private static final Pattern COUNT_COLUMN = Pattern.compile("(?i)(deals|count|cnt|annulled)");
 
     private final List<Step> steps = new CopyOnWriteArrayList<>();
+    private final Consumer<Step> onStep;
+
+    public Trace() {
+        this(step -> {});
+    }
+
+    /** Announces each step as it happens, so the page can show evidence while the agent works. */
+    public Trace(Consumer<Step> onStep) {
+        this.onStep = onStep;
+    }
 
     public void add(Step step) {
         steps.add(step);
+        onStep.accept(step);
     }
 
     public List<Step> steps() {

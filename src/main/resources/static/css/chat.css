@@ -25,15 +25,48 @@ body.rail-open .history { display: flex; }
 }
 .new-chat:hover { background: var(--cobalt); color: var(--on-cobalt); }
 .chat-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; min-height: 0; flex: 1; }
-.chat-list button {
-  display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 8px; background: none; border: 0;
+.chat-search {
+  flex: none; width: 100%; height: 36px; margin: 0 0 8px; padding: 0 10px;
+  background: var(--glaze); border: 1px solid var(--ink-soft); border-radius: 3px; font-size: 14px;
+}
+.chat-row { position: relative; display: flex; align-items: center; min-height: 36px; }
+.chat-open {
+  flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; padding: 8px; background: none; border: 0;
   border-left: 3px solid transparent; border-radius: 0 3px 3px 0; text-align: left; font-size: 14px;
   line-height: 1.35; cursor: pointer;
 }
 .chat-lang { flex: none; font-size: 11px; font-weight: 600; color: var(--ink-soft); }
 .chat-title { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.chat-list button:hover { background: var(--glaze); }
-.chat-list button[aria-current="true"] { background: #fff; border-left-color: var(--cobalt); font-weight: 500; }
+.chat-open:hover { background: var(--glaze); }
+.chat-open[aria-current="true"] { background: #fff; border-left-color: var(--cobalt); font-weight: 500; }
+/* Row actions cover the end of the title when they appear, so the title keeps its full width otherwise. */
+.chat-actions {
+  position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center; padding-left: 14px;
+  background: linear-gradient(90deg, transparent, var(--glaze) 12px); opacity: 0; pointer-events: none;
+}
+.chat-row:hover .chat-actions, .chat-actions:focus-within { opacity: 1; pointer-events: auto; }
+.chat-action {
+  width: 28px; height: 28px; display: grid; place-items: center; padding: 0; background: none; border: 0;
+  border-radius: 3px; color: var(--ink-soft); cursor: pointer;
+}
+.chat-action svg { width: 15px; height: 15px; fill: currentColor; }
+.chat-action:hover { background: var(--glaze-deep); color: var(--cobalt); }
+.rename-input {
+  width: 100%; height: 34px; padding: 0 8px; background: #fff; border: 2px solid var(--cobalt); border-radius: 3px; font-size: 14px;
+}
+.chat-row.is-confirming {
+  flex-wrap: wrap; gap: 4px 12px; padding: 8px; background: #fff; border-left: 3px solid var(--madder); font-size: 14px;
+}
+.chat-confirm-text { flex: 1 0 100%; font-weight: 500; }
+.chat-confirm-delete, .chat-confirm-keep {
+  padding: 0; background: none; border: 0; cursor: pointer; font-weight: 500;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.chat-confirm-delete { color: var(--madder); }
+.chat-confirm-keep { color: var(--cobalt); }
+@media (hover: none) {
+  .chat-actions { opacity: 1; pointer-events: auto; }
+}
 .history .none { margin: 0; padding: 0 8px; font-size: 14px; color: var(--ink-soft); flex: 1; }
 .account { flex: none; margin-top: 12px; padding: 12px 8px 0; border-top: 1px solid var(--ink-soft); font-size: 14px; }
 .account p { margin: 0; }
@@ -83,10 +116,24 @@ body.rail-open .history { display: flex; }
 .turn { padding: 20px 0 24px; border-bottom: 1px solid var(--glaze-deep); max-width: 40em; }
 .turn:last-child { border-bottom: 0; }
 .turn .question { margin: 0 0 10px; color: var(--ink-soft); font-weight: 500; }
-.turn .steps { margin: 0; padding: 0; list-style: none; color: var(--ink-soft); font-size: 15px; }
-.turn .steps li { padding: 2px 0; }
-.turn .steps li:last-child::after { content: "…"; }
+.turn .steps { margin: 0; padding: 0; list-style: none; font-size: 15px; }
+.turn .steps li { position: relative; padding: 2px 0 2px 22px; color: var(--ink-soft); }
+.turn .steps li::before { position: absolute; left: 0; }
+.turn .steps .is-done::before { content: "✓"; color: var(--turquoise); }
+.turn .steps .is-current { color: var(--ink); font-weight: 500; }
+.turn .steps .is-current::before {
+  content: ""; top: 9px; left: 2px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--saffron); animation: working 900ms ease-in-out infinite alternate;
+}
+@keyframes working { from { transform: scale(.55); } to { transform: scale(1.1); } }
+.timer { margin: 8px 0 0 22px; font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .answer { margin: 0; font: 400 clamp(20px, 1.9vw, 25px)/1.42 var(--serif); white-space: pre-line; }
+/* The one moment of motion: when a checked answer arrives, its figures are underlined in order. */
+/* Backwards only: once finished, hover must be free to change the figure again. */
+.is-fresh .fig { animation: draw-figure 420ms ease-out backwards; animation-delay: calc(var(--i, 0) * 110ms + 120ms); }
+@keyframes draw-figure { from { background-size: 0 3px; } to { background-size: 100% 3px; } }
+.is-fresh .check { animation: appear 300ms ease-out backwards; animation-delay: 300ms; }
+@keyframes appear { from { opacity: 0; } to { opacity: 1; } }
 .turn.is-error .answer { font: 400 18px/1.5 var(--sans); color: var(--madder); }
 .turn.is-nodata .answer { border-left: 4px solid var(--madder); padding-left: 16px; }
 .turn.is-clarify .answer { border-left: 4px solid var(--saffron); padding-left: 16px; }
@@ -97,19 +144,19 @@ body.rail-open .history { display: flex; }
   background-repeat: no-repeat; background-position: 0 100%; background-size: 100% 3px;
   transition: background-size 160ms ease-out;
 }
-.fig:hover, .fig:focus-visible { background-size: 100% 100%; }
+.fig:hover, .fig:focus-visible, .fig.is-on { background-size: 100% 100%; }
 .fig:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
 
 .assumptions { margin: 14px 0 0; padding: 0; list-style: none; font-size: 15px; color: var(--ink-soft); }
 .assumptions li { padding: 2px 0; }
 .check { margin: 14px 0 0; font-size: 14px; color: var(--turquoise); font-weight: 500; }
 .check.is-plain { color: var(--ink-soft); font-weight: 400; }
-.turn-actions { margin-top: 10px; }
+.turn-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; }
 .turn-actions button {
   background: none; border: 0; padding: 0; color: var(--cobalt); cursor: pointer; font-size: 14px;
   text-decoration: underline; text-underline-offset: 3px;
 }
-.turn[aria-current="true"] .turn-actions { display: none; }
+.turn[aria-current="true"] .show-evidence { display: none; }
 
 .composer { padding: 12px 40px 20px; background: var(--glaze); border-top: 1px solid var(--glaze-deep); }
 .composer form { display: flex; gap: 10px; align-items: flex-end; }
@@ -125,6 +172,8 @@ body.rail-open .history { display: flex; }
 .composer button:hover:not(:disabled) { background: var(--cobalt-deep); }
 .composer button:disabled { opacity: .55; cursor: progress; }
 .notice { margin: 0 0 10px; color: var(--madder); font-size: 14px; }
+.guest-note { margin: 0 0 10px; font-size: 14px; color: var(--ink-soft); }
+.guest-note a { color: var(--cobalt); font-weight: 500; text-underline-offset: 3px; }
 
 /* Drag to share the width between the answer and its evidence */
 .splitter {
@@ -143,7 +192,22 @@ body.rail-open .history { display: flex; }
 .proof { grid-column: 4; grid-row: 1; background: var(--cobalt); color: var(--on-cobalt); overflow-y: auto; padding: 24px 32px 40px; min-height: 0; min-width: 0; }
 .proof h2 { margin: 0 0 20px; font: 500 20px/1.2 var(--serif); }
 .proof .empty { max-width: 28em; color: var(--on-cobalt-soft); }
+.proof .empty.is-working { color: var(--on-cobalt-soft); animation: breathe 1.2s ease-in-out infinite alternate; }
+@keyframes breathe { from { opacity: .55; } to { opacity: 1; } }
 .step { margin: 0 0 32px; }
+/* A query that just finished unrolls into place while the agent keeps working. */
+.step.is-new { animation: unroll 320ms ease-out both; }
+@keyframes unroll { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.copy-sql {
+  display: block; margin: -4px 0 12px; padding: 0; background: none; border: 0; cursor: pointer;
+  color: var(--on-cobalt-soft); font-size: 13px; text-decoration: underline; text-underline-offset: 3px;
+}
+.copy-sql:hover { color: var(--on-cobalt); }
+.sort { all: unset; cursor: pointer; }
+.sort:hover { color: var(--on-cobalt); text-decoration: underline; text-underline-offset: 3px; }
+.sort:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
+th[aria-sort="ascending"] .sort::after { content: " ▲"; font-size: 10px; }
+th[aria-sort="descending"] .sort::after { content: " ▼"; font-size: 10px; }
 .step h3 { margin: 0 0 8px; font: 500 16px/1.4 var(--sans); }
 .step .kind { color: var(--on-cobalt-soft); font-weight: 400; font-size: 14px; }
 .step pre {
@@ -157,7 +221,8 @@ table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-nu
 th { text-align: left; font-weight: 500; color: var(--on-cobalt-soft); padding: 6px 12px 6px 0; border-bottom: 1px solid var(--cobalt-line); white-space: nowrap; }
 td { padding: 6px 12px 6px 0; border-bottom: 1px solid var(--cobalt-line); vertical-align: top; }
 td.num, th.num { text-align: right; white-space: nowrap; }
-td.is-source { background: var(--saffron); color: var(--ink); box-shadow: -6px 0 0 var(--saffron), 6px 0 0 var(--saffron); }
+td[data-cell] { transition: background-color 120ms ease-out; }
+td.is-source, td.is-pinned { background: var(--saffron); color: var(--ink); box-shadow: -6px 0 0 var(--saffron), 6px 0 0 var(--saffron); }
 td.is-null { color: var(--on-cobalt-soft); }
 .rows-note { margin: 8px 0 0; color: var(--on-cobalt-soft); font-size: 14px; }
 

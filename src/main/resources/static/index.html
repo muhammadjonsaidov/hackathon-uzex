@@ -28,24 +28,27 @@
     <div class="hero-text">
       <h1 data-t="headline"></h1>
       <p class="lead" data-t="lead"></p>
-      <div class="hero-actions">
-        <a class="primary" href="/chat" data-t="start"></a>
-        <span class="no-signup" data-t="noSignup"></span>
-      </div>
+      <form class="ask-box" id="ask-box">
+        <label class="visually-hidden" for="ask-input" data-t="askLabel"></label>
+        <input id="ask-input" maxlength="600" autocomplete="off">
+        <button type="submit" class="primary" data-t="start"></button>
+      </form>
+      <ul class="try" id="try"></ul>
+      <p class="no-signup" data-t="noSignup"></p>
     </div>
     <aside class="demo" aria-labelledby="demo-title">
       <h2 id="demo-title" data-t="demoTitle"></h2>
       <p class="demo-question" data-t="demoQuestion"></p>
-      <p class="demo-answer" id="demo-answer"></p>
-      <p class="demo-check" data-t="demoCheck"></p>
-      <pre>SELECT COUNT(*) AS all_deals,
+      <pre class="demo-part" data-part="1">SELECT COUNT(*) AS all_deals,
   COUNT(*) FILTER (WHERE is_annulled) AS annulled
 FROM deals WHERE year = 2025</pre>
-      <table>
+      <table class="demo-part" data-part="2">
         <thead><tr><th>all_deals</th><th>annulled</th></tr></thead>
         <tbody><tr><td id="cell-all">115763</td><td id="cell-annulled">8085</td></tr></tbody>
       </table>
-      <p class="demo-hint" data-t="demoHint"></p>
+      <p class="demo-answer demo-part" data-part="3" id="demo-answer"></p>
+      <p class="demo-check demo-part" data-part="4" data-t="demoCheck"></p>
+      <p class="demo-hint demo-part" data-part="4"><span data-t="demoHint"></span> <button type="button" class="replay" id="replay" data-t="replay"></button></p>
     </aside>
   </section>
 
@@ -71,7 +74,7 @@ FROM deals WHERE year = 2025</pre>
 
   <section class="closing">
     <p data-t="data"></p>
-    <a class="primary" href="/chat" data-t="start"></a>
+    <a class="primary" href="/chat" id="closing-link"></a>
   </section>
 </main>
 

@@ -38,9 +38,9 @@ The machine and the app must stay running for as long as the judges test.
 
 ## Users and chats
 
-Nobody has to register. Each browser gets a guest user behind an HttpOnly cookie, and its chats are stored in Postgres in the `app` schema. All chats sit in one list, and each chat has one language. Answers still follow the language of each question.
+Nobody has to register. Each browser gets a guest user behind an HttpOnly cookie. A guest's chats are removed when the page is reloaded. All chats sit in one list, and each chat has one language. Answers still follow the language of each question.
 
-Accounts with a username and password are optional. Registering keeps the guest's chats and makes them available on other devices.
+Accounts with a username and password are optional. Chats in an account are kept and can be renamed or deleted. Registering before reloading keeps the guest's chats.
 
 The agent's read-only database role has no access to the `app` schema, so SQL written by the LLM cannot read anyone's chats. The app reaches that schema through its own role, which cannot read the deals.
 

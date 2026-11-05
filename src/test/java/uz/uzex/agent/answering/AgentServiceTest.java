@@ -173,6 +173,30 @@ class AgentServiceTest {
     }
 
     @Test
+    void evidenceIsAnnouncedAsSoonAsAQueryFinishes() {
+        List<String> order = new ArrayList<>();
+        ProgressListener progress = new ProgressListener() {
+            @Override
+            public void step(String label) {}
+
+            @Override
+            public void evidence(AgentResponse.Evidence evidence) {
+                order.add("evidence:" + evidence.result().rows().getFirst().getFirst());
+            }
+        };
+        LlmGateway llm = (messages, tools) -> {
+            tools.runSql(SQL, "count");
+            order.add("model replied");
+            return json("ANSWER", "Всего 115 763 сделки.");
+        };
+        AgentProperties properties = properties("key");
+        AgentService service = new AgentService(llm, prompt, new SqlGuard(), queries,
+                new DraftReviewer(new AnswerVerifier(), prompt), new AgentResponses(properties), properties);
+        service.ask("Сколько сделок?", List.of(), null, progress);
+        assertThat(order).containsExactly("evidence:115763", "model replied");
+    }
+
+    @Test
     void onlyTheLatestHistoryReachesTheModel() {
         List<AgentService.Turn> history = List.of(
                 new AgentService.Turn("q1", "a1"), new AgentService.Turn("q2", "a2"),

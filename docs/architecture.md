@@ -18,7 +18,7 @@ flowchart LR
     I --> S
 ```
 
-1. The browser posts a question and receives server-sent events as the agent works.
+1. The browser posts a question and receives server-sent events as the agent works, including each query's rows as soon as it finishes. Rows are real data, so they can be shown early. The worded answer waits for the check below.
 2. `chat` loads the conversation context from the database, never from the browser.
 3. The model calls tools: `find_company`, `find_broker` and `run_sql`.
 4. `SqlGuard` allows one `SELECT` over the published tables. The database role is read-only as well.
@@ -73,8 +73,9 @@ The agent's role cannot see `app`, so SQL written by the model cannot read anyon
 
 The rules require the prototype to work without registration, so accounts are optional.
 
-- **Guests:** the first question creates a guest behind an HttpOnly, SameSite=Lax cookie.
-- **Registering:** a guest becomes the account in place and keeps its chats.
+- **Guests:** the first question creates a guest behind an HttpOnly, SameSite=Lax cookie. A guest's chats last until the page is reloaded, and the page says so. They are stored on the server meanwhile, because context comes from the stored chat. An hourly job removes guests older than a day, for pages that were closed and never reloaded.
+- **Registered users:** chats are kept, and can be renamed and deleted. Deleting a chat also deletes its questions and answers.
+- **Registering:** a guest becomes the account in place and keeps its chats, as long as the page was not reloaded first.
 - **Signing in:** a guest's chats move to the account in one transaction, and the guest is removed.
 - **Sessions:** only a SHA-256 hash of the token is stored, and the token changes at every sign-in.
 - **Passwords:** BCrypt with strength 12. Sign-in gives the same refusal and does the same work for a wrong password and an unknown username.
@@ -95,5 +96,6 @@ The rules require the prototype to work without registration, so accounts are op
 - The verifier checks figures and names, not meaning. A correct number from the wrong query, or a wrong sentence with no figures in it, can still pass.
 - One machine runs everything. Scaling out would need shared rate limits.
 - Registered users cannot reset a forgotten password or delete their account yet.
+- Reloading a guest's page in one tab clears the guest's chats in its other tabs. The next question there starts a new chat, without the earlier context.
 - Cross-site protection relies on SameSite=Lax cookies and JSON request bodies, without separate CSRF tokens.
 - `/api/ask` is unauthenticated and stores nothing. It exists for the test runner and shares the per-address limit logic.

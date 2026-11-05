@@ -25,5 +25,5 @@ body {
 button, textarea, input { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; scroll-behavior: auto !important; }
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }

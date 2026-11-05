@@ -22,5 +22,9 @@ public record AgentResponse(
         String model,
         long durationMs) {
 
-    public record Evidence(String kind, String input, String purpose, QueryResult result, String error) {}
+    public record Evidence(String kind, String input, String purpose, QueryResult result, String error) {
+        static Evidence of(Trace.Step step) {
+            return new Evidence(step.kind(), step.input(), step.purpose(), step.result(), step.error());
+        }
+    }
 }

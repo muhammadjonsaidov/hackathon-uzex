@@ -144,6 +144,11 @@ public class AskController {
         }
 
         @Override
+        public void evidence(AgentResponse.Evidence evidence) {
+            send(emitter, "evidence", evidence);
+        }
+
+        @Override
         public void answer(AgentResponse response) {
             send(emitter, "final", response);
         }

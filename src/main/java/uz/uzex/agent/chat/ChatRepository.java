@@ -23,7 +23,6 @@ public class ChatRepository implements GuestDataTransfer {
     public record StoredTurn(String question, JsonNode response) {}
 
     private static final int MAX_LISTED_CHATS = 100;
-    private static final int MAX_TITLE_LENGTH = 80;
     private static final String SUMMARY_COLUMNS = "id, title, lang, updated_at";
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -49,11 +48,26 @@ public class ChatRepository implements GuestDataTransfer {
 
     public ChatSummary create(UUID user, String lang, String firstQuestion) {
         UUID id = UUID.randomUUID();
-        String title = firstQuestion.length() <= MAX_TITLE_LENGTH ? firstQuestion : firstQuestion.substring(0, MAX_TITLE_LENGTH);
         jdbc.sql("INSERT INTO chats (id, user_id, lang, title) VALUES (?, ?, ?, ?)")
-                .params(id, user, lang, title)
+                .params(id, user, lang, ChatTitle.fromQuestion(firstQuestion))
                 .update();
         return find(user, id).orElseThrow();
+    }
+
+    /** False when this user has no such chat. */
+    public boolean rename(UUID user, UUID chat, String title) {
+        return jdbc.sql("UPDATE chats SET title = ? WHERE id = ? AND user_id = ?")
+                .params(title, chat, user)
+                .update() == 1;
+    }
+
+    /** False when this user has no such chat. Its turns go with it. */
+    public boolean delete(UUID user, UUID chat) {
+        return jdbc.sql("DELETE FROM chats WHERE id = ? AND user_id = ?").params(chat, user).update() == 1;
+    }
+
+    public void deleteAllOf(UUID user) {
+        jdbc.sql("DELETE FROM chats WHERE user_id = ?").param(user).update();
     }
 
     /** Callers must have checked ownership with {@link #find}. */
