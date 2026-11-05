@@ -12,9 +12,6 @@ REVOKE ALL ON SCHEMA app FROM PUBLIC;
 
 CREATE TABLE app.users (
   id uuid PRIMARY KEY,
-  telegram_id bigint UNIQUE,
-  telegram_username text,
-  telegram_name text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 

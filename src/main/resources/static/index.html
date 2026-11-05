@@ -68,15 +68,6 @@ body.rail-open .history { display: flex; }
 .chat-list button:hover { background: var(--glaze); }
 .chat-list button[aria-current="true"] { background: #fff; border-left-color: var(--cobalt); font-weight: 500; }
 .history .none { margin: 0; padding: 0 8px; font-size: 14px; color: var(--ink-soft); flex: 1; }
-.account { flex: none; margin-top: 12px; padding: 12px 8px 0; border-top: 1px solid var(--ink-soft); font-size: 14px; }
-.account p { margin: 0 0 6px; }
-.account-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.account-hint { margin-top: 6px !important; color: var(--ink-soft); font-size: 13px; }
-.account-error { margin-top: 6px !important; color: var(--madder); font-size: 13px; }
-.account-action {
-  padding: 0; background: none; border: 0; color: var(--cobalt); font-weight: 500; cursor: pointer;
-  text-decoration: underline; text-underline-offset: 3px;
-}
 
 /* Asking side */
 .ask { grid-column: 2; grid-row: 1; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
@@ -269,10 +260,6 @@ const UI = {
     chats: "Чаты",
     newChat: "Новый чат",
     noChats: "Здесь появятся ваши чаты.",
-    login: "Войти через Telegram",
-    loginHint: "Вход не обязателен: можно спрашивать и без него.",
-    logout: "Выйти",
-    loginFailed: "Не удалось войти через Telegram. Попробуйте ещё раз.",
     resize: "Изменить ширину панелей"
   },
   uz: {
@@ -305,10 +292,6 @@ const UI = {
     chats: "Chatlar",
     newChat: "Yangi chat",
     noChats: "Chatlaringiz shu yerda chiqadi.",
-    login: "Telegram orqali kirish",
-    loginHint: "Kirish shart emas: kirmasdan ham so‘rash mumkin.",
-    logout: "Chiqish",
-    loginFailed: "Telegram orqali kirib bo‘lmadi. Qaytadan urinib ko‘ring.",
     resize: "Panellar kengligini o‘zgartirish"
   }
 };
@@ -352,9 +335,6 @@ const loadedChats = new Map();
 let active = null;
 let lang = initialLang();
 let busy = false;
-let account = { user: null, telegramClientId: null };
-let telegramNonce = null;
-let accountMessage = "";
 
 const currentChat = () => active;
 const turns = () => (active ? active.turns : []);
@@ -434,107 +414,12 @@ function renderHistory() {
   } else {
     box.append(el("p", "none", t.noChats));
   }
-  const panel = accountPanel(t);
-  if (panel) box.append(panel);
 }
 
 function renderAll() {
   renderHistory();
   renderThread();
   renderProof();
-}
-
-/* Optional Telegram sign-in. The rules require the page to work without registration. */
-function accountPanel(t) {
-  if (!account.telegramClientId) return null;
-  const panel = el("div", "account");
-  if (account.user) {
-    const label = account.user.username ? `@${account.user.username}` : account.user.name;
-    panel.append(el("p", "account-name", label));
-    const out = el("button", "account-action", t.logout);
-    out.type = "button";
-    out.addEventListener("click", signOut);
-    panel.append(out);
-  } else {
-    const signIn = el("button", "account-action", t.login);
-    signIn.type = "button";
-    signIn.addEventListener("click", startTelegramLogin);
-    panel.append(signIn, el("p", "account-hint", t.loginHint));
-  }
-  if (accountMessage) panel.append(el("p", "account-error", accountMessage));
-  return panel;
-}
-
-async function loadAccount() {
-  try {
-    account = await api("/api/me");
-  } catch (e) {
-    account = { user: null, telegramClientId: null };
-  }
-  if (account.telegramClientId && !account.user) await prepareTelegram();
-}
-
-/* Done ahead of the click: browsers block a login popup that opens after waiting on the network. */
-async function prepareTelegram() {
-  try {
-    if (!document.getElementById("telegram-login")) {
-      const script = document.createElement("script");
-      script.id = "telegram-login";
-      script.src = "https://oauth.telegram.org/js/telegram-login.js?6";
-      script.async = true;
-      document.head.append(script);
-    }
-    telegramNonce = (await api("/api/auth/telegram/nonce", { method: "POST" })).nonce;
-  } catch (e) {
-    telegramNonce = null;
-  }
-}
-
-function startTelegramLogin() {
-  accountMessage = "";
-  if (!window.Telegram || !window.Telegram.Login || !telegramNonce) {
-    accountMessage = UI[lang].loginFailed;
-    renderHistory();
-    prepareTelegram();
-    return;
-  }
-  window.Telegram.Login.auth(
-    { client_id: Number(account.telegramClientId), scope: ["profile"], lang, nonce: telegramNonce },
-    finishTelegramLogin
-  );
-}
-
-async function finishTelegramLogin(result) {
-  try {
-    if (!result || result.error || !result.id_token) throw new Error("No token");
-    await api("/api/auth/telegram", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: result.id_token })
-    });
-    accountMessage = "";
-    loadedChats.clear();
-    const openId = active ? active.id : null;
-    active = null;
-    await loadAccount();
-    await loadChats();
-    if (openId) await openChat(openId).catch(() => renderAll());
-    else renderAll();
-  } catch (e) {
-    accountMessage = UI[lang].loginFailed;
-    await prepareTelegram();
-    renderHistory();
-  }
-}
-
-async function signOut() {
-  await api("/api/auth/logout", { method: "POST" }).catch(() => null);
-  chats = [];
-  loadedChats.clear();
-  active = null;
-  rememberChat(null);
-  await loadAccount();
-  renderAll();
 }
 
 /* Chats panel: open by default where there is room for it */
@@ -992,7 +877,6 @@ applyLanguage(lang);
 
 (async () => {
   try { localStorage.removeItem("uzex-chats-v1"); } catch (e) { /* storage may be blocked */ }
-  await loadAccount();
   await loadChats();
   let saved = null;
   try { saved = localStorage.getItem("uzex-active-chat"); } catch (e) { /* storage may be blocked */ }

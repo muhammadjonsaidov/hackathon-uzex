@@ -52,16 +52,6 @@ docker compose down -v
 docker compose up -d --wait db
 ```
 
-### Optional Telegram login
-
-Telegram login stays hidden until `TELEGRAM_CLIENT_ID` is set. To turn it on:
-
-1. Open @BotFather, select your bot, and open **Login Widget**.
-2. Add your public `https://` address under **Allowed URLs**.
-3. Copy the **Client ID** into `TELEGRAM_CLIENT_ID` in `.env`, then restart the app.
-
-The login uses Telegram's OpenID Connect flow. The server checks the ID token's signature against Telegram's published keys, along with its issuer, audience, expiry and a one-time nonce. Signing in moves the browser's anonymous chats to the Telegram account.
-
 ## How an answer is made
 
 1. The LLM reads the question and calls tools: `find_company`, `find_broker` and `run_sql`.
