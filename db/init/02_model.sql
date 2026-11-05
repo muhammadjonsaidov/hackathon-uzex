@@ -102,7 +102,6 @@ SELECT inn, name, region, activity, role, vat_payer = 'Да' AS vat_payer,
        spelled_key(name) AS spelled_key, loose_key(name) AS loose_key
 FROM raw.participants;
 ALTER TABLE participants ADD PRIMARY KEY (inn);
-CREATE INDEX participants_loose_trgm ON participants USING gin (loose_key gin_trgm_ops);
 
 CREATE TABLE brokers AS
 SELECT code, name, inn, region, spelled_key(name) AS spelled_key, loose_key(name) AS loose_key

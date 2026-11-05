@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UZEX Reyestr Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Piazzolla:opsz,wght@8..30,400;8..30,500&display=swap&subset=cyrillic-ext" rel="stylesheet">
+<link href="/css/base.css" rel="stylesheet">
+<link href="/css/chat.css" rel="stylesheet">
+</head>
+<body class="chat-page">
+<nav class="history" id="history"></nav>
+<main class="ask">
+  <header class="masthead">
+    <div class="masthead-start">
+      <button type="button" class="rail-toggle" id="rail-toggle" aria-controls="history"></button>
+      <h1><a href="/" id="title"></a></h1>
+    </div>
+    <div class="langs" role="group" aria-label="Til / Язык">
+      <button type="button" data-lang="ru">RU</button>
+      <button type="button" data-lang="uz">UZ</button>
+    </div>
+  </header>
+  <section class="thread" id="thread" aria-live="polite"></section>
+  <div class="composer">
+    <p class="notice" id="notice" hidden></p>
+    <form id="form">
+      <textarea id="input" rows="1" maxlength="600"></textarea>
+      <button type="submit" id="send"></button>
+    </form>
+  </div>
+</main>
+<div class="splitter" id="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="0" aria-valuemax="100"></div>
+<aside class="proof" id="proof"></aside>
+
+<script type="module" src="/js/chat.js"></script>
+</body>
+</html>

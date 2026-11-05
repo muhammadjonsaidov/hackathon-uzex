@@ -12,7 +12,7 @@ Start the database. The first start loads the CSVs in about 30 seconds:
 docker compose up -d --wait db
 ```
 
-Start the app, then open http://localhost:8080:
+Start the app. The landing page is at http://localhost:8080 and the chat at http://localhost:8080/chat:
 
 ```bash
 ./gradlew bootRun
@@ -28,17 +28,19 @@ docker compose down -v
 
 ## Public URL
 
-With `NGROK_AUTHTOKEN` set in `.env`, this starts a tunnel to the app. The address appears at http://localhost:4040:
+Tailscale Funnel gives the app a public `https://` address. Run this in a second terminal and leave it running:
 
 ```bash
-docker compose --profile public up -d tunnel
+tailscale funnel 8080
 ```
 
 The machine and the app must stay running for as long as the judges test.
 
 ## Users and chats
 
-Nobody has to register. Each browser gets an anonymous user behind an HttpOnly cookie, and its chats are stored in Postgres in the `app` schema. All chats sit in one list, and each chat has one language. Answers still follow the language of each question.
+Nobody has to register. Each browser gets a guest user behind an HttpOnly cookie, and its chats are stored in Postgres in the `app` schema. All chats sit in one list, and each chat has one language. Answers still follow the language of each question.
+
+Accounts with a username and password are optional. Registering keeps the guest's chats and makes them available on other devices.
 
 The agent's read-only database role has no access to the `app` schema, so SQL written by the LLM cannot read anyone's chats. The app reaches that schema through its own role, which cannot read the deals.
 
@@ -54,10 +56,12 @@ docker compose up -d --wait db
 
 ## How an answer is made
 
+See [docs/architecture.md](docs/architecture.md) for the system design: the request flow, packages, data, identity and known limits.
+
 1. The LLM reads the question and calls tools: `find_company`, `find_broker` and `run_sql`.
-2. `SqlGuard` accepts one `SELECT` over the published tables only. The database role is read-only and cannot see anything else, so it blocks writes even if the guard is bypassed.
+2. `SqlGuard` accepts one `SELECT` over the published tables. The database role is read-only and cannot see anything else, so it blocks writes even if the guard is bypassed.
 3. The LLM words the answer from the rows it received.
-4. `AnswerVerifier` checks every number, date and quoted or all-caps name against the tool results. A failed draft gets one repair attempt. If it fails again, the page shows the raw query result instead of the text.
+4. `DraftReviewer` checks every number, date and quoted or all-caps name against the tool results. A failed draft gets one repair attempt. If it fails again, the page shows the raw query result instead of the text.
 5. An answer with no query rows behind it becomes "no data".
 
 The data rules live in `db/init/02_model.sql` as precomputed columns, so the LLM selects correct values instead of deriving them:

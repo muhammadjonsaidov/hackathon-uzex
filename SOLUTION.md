@@ -11,14 +11,14 @@ Birja bitimlari bo‘yicha rus va o‘zbek tillarida (lotin va kirill) javob ber
 2. Javobni kod tekshiradi: har bir raqam, sana va nom so‘rov natijalarida bo‘lishi shart. Tashqi manbaga havola rad etiladi. Tekshiruvdan o‘tmagan javob bir marta tuzatishga qaytariladi, yana o‘tmasa, matn o‘rniga so‘rov natijasining o‘zi ko‘rsatiladi.
 3. Ma’lumotda javob bo‘lmasa, agent shuni ochiq aytadi: bunday javobda raqam, kompaniya yoki boshqa tovar nomi bo‘lishi mumkin emas, buni kod tekshiradi.
 4. Javobda nomlar va kodlar so‘rov natijasidagidek, tarjimasiz ko‘rsatiladi. Manba CSV fayllar o‘zgartirilmaydi.
-5. Foydalanuvchi va chatlar alohida sxemada saqlanadi. Agent SQL’i ishlaydigan faqat o‘qish huquqli rol bu sxemani ko‘rmaydi, shuning uchun savol orqali boshqa birovning chatini o‘qib bo‘lmaydi. Kirish ro‘yxatdan o‘tishsiz ishlaydi.
+5. Foydalanuvchi va chatlar alohida sxemada saqlanadi. Agent SQL’i ishlaydigan faqat o‘qish huquqli rol bu sxemani ko‘rmaydi, shuning uchun savol orqali boshqa birovning chatini o‘qib bo‘lmaydi. Kirish ro‘yxatdan o‘tishsiz ishlaydi, foydalanuvchi nomi va parol bilan hisob esa ixtiyoriy (parollar BCrypt bilan saqlanadi).
 
 **Javoblar qanday tekshirildi.**
 - 62 ta o‘z savolimiz (31 ta savol, ikki tilda). Kutilgan javoblar CSV fayllardan alohida kod bilan hisoblangan. Natija: 62/62.
 - Ilova kodini ko‘rmasdan yozilgan 40 ta savoldan iborat ko‘r imtihon. Birinchi o‘tkazishda 39/40. Xatolar tuzatilgach qayta o‘tkazildi: 40/40 (bu savollar endi ko‘r emas, shuning uchun asosiy ko‘rsatkich birinchi natijadir).
 - Javobi yo‘q 10 ta savolning barchasida agent hech narsa o‘ylab topmadi.
 - Har bir javob qo‘lda ham o‘qib chiqildi, shu tarzda avtomatik baholash ko‘rmaydigan xatolar topildi va tuzatildi.
-- Oxirgi sinovda eng sekin javob 6,6 soniya (cheklov 90 soniya).
+- Oxirgi sinovda eng sekin javob 6,8 soniya (cheklov 90 soniya).
 
 ---
 
@@ -35,11 +35,11 @@ Birja bitimlari bo‘yicha rus va o‘zbek tillarida (lotin va kirill) javob ber
 2. Ответ проверяет код: каждое число, дата и название должны быть в результатах запросов. Ссылки на внешние источники отклоняются. Непрошедший ответ один раз возвращается на исправление, а если не прошёл снова, вместо текста показывается сам результат запроса.
 3. Если в данных нет ответа, агент говорит об этом прямо: в таком ответе не может быть чисел, компаний или других товаров, и это проверяет код.
 4. Названия и коды в ответе приводятся так, как их вернул запрос, без перевода. Исходные CSV не изменяются.
-5. Пользователи и чаты хранятся в отдельной схеме. Роль только для чтения, под которой работает SQL агента, её не видит, поэтому прочитать чужой чат через вопрос нельзя. Сервис работает без регистрации.
+5. Пользователи и чаты хранятся в отдельной схеме. Роль только для чтения, под которой работает SQL агента, её не видит, поэтому прочитать чужой чат через вопрос нельзя. Сервис работает без регистрации, а аккаунт с именем и паролем необязателен (пароли хранятся через BCrypt).
 
 **Как проверялись ответы.**
 - 62 своих вопроса (31 вопрос на двух языках). Ожидаемые ответы посчитаны отдельным кодом прямо из CSV. Результат: 62/62.
 - Слепой экзамен из 40 вопросов, написанных без доступа к коду приложения. Первый прогон: 39/40. После исправления ошибок повторный прогон: 40/40 (эти вопросы уже не слепые, поэтому честный показатель — первый результат).
 - На всех 10 вопросах без ответа в данных агент ничего не выдумал.
 - Все ответы также прочитаны вручную, что позволило найти и исправить ошибки, которые автоматическая оценка не видит.
-- В последнем прогоне самый медленный ответ: 6,6 секунды (лимит 90 секунд).
+- В последнем прогоне самый медленный ответ: 6,8 секунды (лимит 90 секунд).

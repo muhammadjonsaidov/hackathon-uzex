@@ -7,31 +7,31 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
-import uz.uzex.agent.account.AccountService;
-import uz.uzex.agent.account.ChatStore;
+import uz.uzex.agent.chat.ChatRepository;
+import uz.uzex.agent.chat.ChatSummary;
 
 @RestController
 public class ChatController {
 
-    public record ChatDetails(ChatStore.ChatSummary chat, List<ChatStore.StoredTurn> turns) {}
+    public record ChatDetails(ChatSummary chat, List<ChatRepository.StoredTurn> turns) {}
 
-    private final AccountService accounts;
-    private final ChatStore chats;
+    private final CurrentUser currentUser;
+    private final ChatRepository chats;
 
-    public ChatController(AccountService accounts, ChatStore chats) {
-        this.accounts = accounts;
+    public ChatController(CurrentUser currentUser, ChatRepository chats) {
+        this.currentUser = currentUser;
         this.chats = chats;
     }
 
     @GetMapping("/api/chats")
-    public List<ChatStore.ChatSummary> chats(HttpServletRequest request) {
-        return accounts.find(request).map(chats::list).orElse(List.of());
+    public List<ChatSummary> chats(HttpServletRequest request) {
+        return currentUser.find(request).map(chats::list).orElse(List.of());
     }
 
     /** Someone else's chat answers exactly like a chat that does not exist. */
     @GetMapping("/api/chats/{id}")
     public ResponseEntity<ChatDetails> chat(@PathVariable UUID id, HttpServletRequest request) {
-        return accounts.find(request)
+        return currentUser.find(request)
                 .flatMap(user -> chats.find(user, id))
                 .map(chat -> ResponseEntity.ok(new ChatDetails(chat, chats.turns(chat.id()))))
                 .orElseGet(() -> ResponseEntity.notFound().build());

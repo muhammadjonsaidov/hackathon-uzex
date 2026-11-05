@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UZEX Reyestr Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Piazzolla:opsz,wght@8..30,400;8..30,500&display=swap&subset=cyrillic-ext" rel="stylesheet">
+<link href="/css/base.css" rel="stylesheet">
+<link href="/css/account.css" rel="stylesheet">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" data-t="brand"></a>
+  <div class="langs" role="group" aria-label="Til / Язык">
+    <button type="button" data-lang="ru">RU</button>
+    <button type="button" data-lang="uz">UZ</button>
+  </div>
+</header>
+<main class="panel">
+  <h1 id="heading"></h1>
+  <form id="form" novalidate>
+    <label for="username" data-t="username"></label>
+    <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" required>
+    <p class="field-hint" id="username-hint" data-t="usernameHint"></p>
+    <label for="password" data-t="password"></label>
+    <input id="password" name="password" type="password" maxlength="72" required>
+    <p class="field-hint" id="password-hint" data-t="passwordHint"></p>
+    <p class="error" id="error" role="alert" hidden></p>
+    <button type="submit" id="submit"></button>
+  </form>
+  <p class="switch"><span id="switch-text"></span> <a id="switch-link" href="#"></a></p>
+  <p class="guest"><a href="/chat" data-t="guest"></a></p>
+</main>
+<script type="module" src="/js/account.js"></script>
+</body>
+</html>

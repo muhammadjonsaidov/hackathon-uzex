@@ -1,0 +1,8 @@
+export const $ = id => document.getElementById(id);
+
+export const el = (tag, cls, text) => {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+};

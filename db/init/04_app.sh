@@ -12,8 +12,13 @@ REVOKE ALL ON SCHEMA app FROM PUBLIC;
 
 CREATE TABLE app.users (
   id uuid PRIMARY KEY,
-  created_at timestamptz NOT NULL DEFAULT now()
+  -- Both empty for a guest. Only a BCrypt hash of the password is stored.
+  username text,
+  password_hash text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CHECK ((username IS NULL) = (password_hash IS NULL))
 );
+CREATE UNIQUE INDEX users_username ON app.users (lower(username));
 
 -- Only the hash of a browser's session token is stored, so a leaked table cannot log anyone in.
 CREATE TABLE app.web_sessions (

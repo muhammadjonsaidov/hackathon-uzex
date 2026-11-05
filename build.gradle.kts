@@ -28,6 +28,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.ai:spring-ai-starter-model-openai")
     implementation("com.github.jsqlparser:jsqlparser:5.3")
+    implementation("org.springframework.security:spring-security-crypto")
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
