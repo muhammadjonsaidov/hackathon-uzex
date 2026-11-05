@@ -140,7 +140,6 @@ CREATE TEMP TABLE known_ptype AS
 CREATE TABLE contracts AS
 SELECT clean_num(c.contract_no)::bigint AS contract_no,
        c.product,
-       cat.product_uz,
        c.product_name AS seller_product_name,
        COALESCE(c.brand_n, (SELECT b.v FROM known_brand b
                             WHERE b.hs_code = c.hs_code
@@ -215,7 +214,7 @@ SELECT d.deal_no, d.deal_date, d.deal_time,
        d.status = 'Аннулирован(Не оплачен)' AS is_annulled,
        d.status IN ('Исполнен', 'Исполнен(Частично)') AS is_fulfilled,
        d.contract_no,
-       c.product, c.product_uz, d.product_text, c.grade, c.class, c.brand, c.size, c.ptype,
+       c.product, d.product_text, c.grade, c.class, c.brand, c.size, c.ptype,
        c.hs_code, c.product_group, c.category, c.industry,
        d.quantity, d.lot, d.unit,
        d.quantity * d.lot AS volume,

@@ -27,7 +27,9 @@ public class SqlGuard {
     private static final Pattern FORBIDDEN = Pattern.compile(
             "\\b(insert|into|update|delete|drop|alter|create|truncate|grant|revoke|merge|call|vacuum|copy"
                     + "|pg_\\w+|current_setting|set_config|dblink\\w*|lo_\\w+|nextval|setval"
-                    + "|\\w+_to_xml\\w*|information_schema)\\b",
+                    + "|\\w+_to_xml\\w*|information_schema"
+                    // Our own lookup names for reading Uzbek questions. They are not in the published data.
+                    + "|product_uz|region_uz_cyr)\\b",
             Pattern.CASE_INSENSITIVE);
 
     /** Returns the statement to execute, or throws with a message the LLM can act on. */

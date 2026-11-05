@@ -79,6 +79,18 @@ public enum Lang {
         return UZBEK_CYRILLIC.matcher(sentence).find() ? UZ_CYRL : RU;
     }
 
+    /**
+     * Whether an answer opens in this language's script. Only the first line is read, because the
+     * lines after it can be lists of data values that keep their own script.
+     */
+    public boolean matchesScript(String answer) {
+        if (this == UZ_LATN || answer == null) {
+            return true;
+        }
+        String firstLine = answer.strip().split("\\R", 2)[0];
+        return count(LOWER_LATIN_WORD, firstLine) <= count(LOWER_CYRILLIC_WORD, firstLine);
+    }
+
     private static int count(Pattern pattern, String text) {
         return (int) pattern.matcher(text).results().count();
     }

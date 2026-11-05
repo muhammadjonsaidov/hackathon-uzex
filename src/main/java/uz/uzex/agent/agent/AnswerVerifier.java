@@ -2,6 +2,7 @@ package uz.uzex.agent.agent;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,6 +39,7 @@ public class AnswerVerifier {
     /** Sources an answer may draw on. */
     public record Sources(List<String> evidenceCells, String question, String referenceText) {}
 
+    private static final int MIN_NAME_LENGTH = 3;
     private static final BigDecimal SMALL_INTEGER_LIMIT = BigDecimal.valueOf(12);
     private static final Set<Integer> DATA_YEARS = Set.of(2022, 2023, 2024, 2025, 2026);
     private static final Set<String> COVERAGE_DATES = Set.of("2022-01-03", "2026-10-30");
@@ -105,6 +107,27 @@ public class AnswerVerifier {
         return new Verdict(
                 unknownNumbers.isEmpty() && unknownDates.isEmpty() && unknownNames.isEmpty(),
                 List.copyOf(unknownNumbers), List.copyOf(unknownDates), unknownNames);
+    }
+
+    /**
+     * Products or companies a "no answer" reply names beyond what the question itself named. The
+     * rules disqualify naming a number, company or product where the data has no answer, so a
+     * helpful "only these grades exist" is not allowed either, even when it is true.
+     */
+    public static List<String> namedBeyondQuestion(String answer, Collection<String> names, String question) {
+        String loweredQuestion = looseText(question == null ? "" : question);
+        List<String> found = new ArrayList<>();
+        for (String name : names) {
+            String lowered = looseText(name);
+            if (lowered.length() < MIN_NAME_LENGTH || loweredQuestion.contains(lowered)) {
+                continue;
+            }
+            Pattern whole = Pattern.compile("(?iU)(?<![\\w-])" + Pattern.quote(lowered) + "(?![\\w-])");
+            if (whole.matcher(looseText(answer == null ? "" : answer)).find()) {
+                found.add(name);
+            }
+        }
+        return found;
     }
 
     /** "31 марта" or "31-mart" names a calendar day rather than a figure from the data. */

@@ -32,6 +32,19 @@ class LangTest {
     }
 
     @Test
+    void noticesAnAnswerInTheWrongScript() {
+        assertThat(Lang.UZ_CYRL.matchesScript("2025-yilda eng ko‘p sotilgan mahsulot — Хлопок-сырец.")).isFalse();
+        assertThat(Lang.UZ_CYRL.matchesScript("2025 йилда энг кўп сотилган маҳсулот — Хлопок-сырец.")).isTrue();
+        assertThat(Lang.RU.matchesScript("На втором месте — Xorazm viloyati с суммой 690 сум.")).isTrue();
+    }
+
+    @Test
+    void valuesInAListDoNotCountAsTheWrongScript() {
+        assertThat(Lang.RU.matchesScript("Три региона-лидера:\n1. Toshkent shahri\n2. Namangan viloyati\n3. Xorazm viloyati")).isTrue();
+        assertThat(Lang.UZ_LATN.matchesScript("Eng yirik tovar:\n1. Пшеница продовольственная")).isTrue();
+    }
+
+    @Test
     void detectsUzbekCyrillic() {
         assertThat(Lang.detect("2025 йилда нечта битим бўлган?")).isEqualTo(Lang.UZ_CYRL);
         assertThat(Lang.detect("Неча битим бор?")).isEqualTo(Lang.UZ_CYRL);

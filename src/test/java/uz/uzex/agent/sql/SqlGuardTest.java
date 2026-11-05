@@ -47,6 +47,8 @@ class SqlGuardTest {
             "SELECT * INTO copy_of_deals FROM deals",
             "COPY deals TO '/tmp/x'",
             "SELECT * FROM secrets",
+            "SELECT product_uz FROM product_catalog",
+            "SELECT region_uz_cyr FROM regions",
             "  ",
             "not sql at all"
     })

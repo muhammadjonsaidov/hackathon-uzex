@@ -57,6 +57,20 @@ public final class Trace {
         return lastSql != null ? lastSql : lastLookup;
     }
 
+    /** Names of the companies and brokers that lookups returned, in the "name" column. */
+    public List<String> lookupNames() {
+        List<String> names = new ArrayList<>();
+        for (Step step : steps) {
+            if (!step.kind().equals("sql") && step.succeeded()) {
+                int column = step.result().columns().indexOf("name");
+                if (column >= 0) {
+                    step.result().rows().forEach(row -> names.add(row.get(column)));
+                }
+            }
+        }
+        return names;
+    }
+
     /** Every cell returned by any tool, the only source of figures an answer may use. */
     public List<String> evidenceCells() {
         List<String> cells = new ArrayList<>();

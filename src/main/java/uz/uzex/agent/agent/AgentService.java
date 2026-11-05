@@ -98,7 +98,11 @@ public class AgentService {
 
         progress.step(lang.stepVerify);
         Verdict verdict = check(draft, question, trace);
-        String problem = problemWith(draft, verdict, trace);
+        String problem = problemOf(draft, verdict, question, trace);
+        if (problem == null && !lang.matchesScript(draft.answer())) {
+            // Worth one retry but not a fallback: correct figures in the wrong script beat a raw table.
+            problem = "the answer must be written in " + lang.promptName + ", keeping data values unchanged";
+        }
         if (problem != null && secondsSince(start) < properties.repairBudgetSeconds()) {
             log.info("Repairing draft: {}", problem);
             messages.add(new AssistantMessage(content == null ? "" : content));
@@ -109,7 +113,7 @@ public class AgentService {
             draft = DraftParser.parse(content);
             progress.step(lang.stepVerify);
             verdict = check(draft, question, trace);
-            problem = problemWith(draft, verdict, trace);
+            problem = problemOf(draft, verdict, question, trace);
         }
 
         if (problem != null) {
@@ -159,6 +163,18 @@ public class AgentService {
         // even when a query returned it, so only the question and the coverage dates are allowed.
         List<String> evidence = draft.status() == Status.NO_DATA ? List.of() : trace.evidenceCells();
         return verifier.verify(text, new Sources(evidence, question, systemPrompt.referenceText()));
+    }
+
+    private String problemOf(Draft draft, Verdict verdict, String question, Trace trace) {
+        String problem = problemWith(draft, verdict, trace);
+        if (problem != null || draft.status() != Status.NO_DATA) {
+            return problem;
+        }
+        String text = draft.answer() + "\n" + String.join("\n", draft.assumptions());
+        List<String> named = new ArrayList<>(AnswerVerifier.namedBeyondQuestion(text, systemPrompt.productTerms(), question));
+        named.addAll(AnswerVerifier.namedBeyondQuestion(text, trace.lookupNames(), question));
+        return named.isEmpty() ? null
+                : "a NO_DATA answer may not name products or companies the question did not name, even real ones: " + named;
     }
 
     /** Null when the draft may be shown. */

@@ -235,6 +235,25 @@ const el = (tag, cls, text) => {
 const MAX_SHOWN_ROWS = 50;
 /* Identifiers look numeric but are not quantities: no digit grouping, no figure links. */
 const IDENTIFIER_COLUMN = /(^|_)(inn|no|code|year|month|quarter)$/i;
+/* Layout only: the model sometimes writes a ranking as "1) … 2) … 3) …" in one paragraph. */
+function separateList(text) {
+  const start = text.match(/(^|\s)1[.)]\s/);
+  if (!start) return text;
+  const parts = [];
+  let from = start.index + start[1].length;
+  const intro = text.slice(0, from).trimEnd();
+  for (let n = 2; ; n++) {
+    const next = text.slice(from + 2).match(new RegExp(`\\s${n}[.)]\\s`));
+    if (!next) break;
+    const end = from + 2 + next.index;
+    parts.push(text.slice(from, end).trimEnd().replace(/[;,]$/, ""));
+    from = end + 1;
+  }
+  if (!parts.length) return text;
+  parts.push(text.slice(from).trimEnd());
+  return (intro ? `${intro}\n` : "") + parts.join("\n");
+}
+
 const turns = [];
 let lang = initialLang();
 let selected = null;
@@ -286,7 +305,7 @@ function matchCells(digits, word, cells) {
 
 function renderAnswer(container, turn) {
   container.textContent = "";
-  const text = turn.response.answer;
+  const text = separateList(turn.response.answer);
   const cells = turn.cells || [];
   let last = 0;
   for (const m of text.matchAll(NUMBER)) {
@@ -459,7 +478,7 @@ function renderStep(step, s, t) {
   result.rows.slice(0, MAX_SHOWN_ROWS).forEach((row, r) => {
     const tr = el("tr");
     row.forEach((value, c) => {
-      const td = el("td", numeric[c] ? "num" : "", value === null ? "—" : (numeric[c] ? groupDigits(value) : value));
+      const td = el("td", numeric[c] ? "num" : "", value === null ? "—" : value);
       if (value === null) td.classList.add("is-null");
       td.dataset.cell = `${s}-${r}-${c}`;
       tr.append(td);
@@ -473,12 +492,6 @@ function renderStep(step, s, t) {
   if (result.rows.length > MAX_SHOWN_ROWS) box.append(el("p", "rows-note", t.rows(MAX_SHOWN_ROWS, result.rows.length)));
   if (result.truncated) box.append(el("p", "rows-note", t.truncated));
   return box;
-}
-
-function groupDigits(value) {
-  const [whole, fraction] = value.split(".");
-  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  return fraction ? `${grouped}.${fraction}` : grouped;
 }
 
 /* Talking to the server */

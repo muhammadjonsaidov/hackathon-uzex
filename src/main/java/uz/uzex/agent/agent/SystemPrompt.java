@@ -36,6 +36,7 @@ public class SystemPrompt {
     private final QueryExecutor executor;
     private final AgentProperties properties;
     private volatile String template;
+    private volatile List<String> productTerms;
 
     public SystemPrompt(QueryExecutor executor, AgentProperties properties) {
         this.executor = executor;
@@ -44,6 +45,23 @@ public class SystemPrompt {
 
     public String forLanguage(Lang lang) {
         return template().replace(LANG_RULE, lang.promptName + ", the language of the question");
+    }
+
+    /** Product names, aliases aside, and brands: what a "no answer" reply must not name. */
+    public List<String> productTerms() {
+        List<String> current = productTerms;
+        if (current == null) {
+            try {
+                current = executor.run("SELECT product FROM product_catalog "
+                        + "UNION SELECT brand FROM contracts WHERE brand IS NOT NULL").rows().stream()
+                        .map(List::getFirst)
+                        .toList();
+            } catch (SQLException e) {
+                throw new IllegalStateException("Could not read product names", e);
+            }
+            productTerms = current;
+        }
+        return current;
     }
 
     /** Text the verifier accepts names and constants from, the same for every language. */

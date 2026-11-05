@@ -105,6 +105,33 @@ class AnswerVerifierTest {
     }
 
     @Test
+    void noAnswerRepliesMayNotNameOtherProducts() {
+        List<String> terms = List.of("АИ-80", "АИ-92", "Мука", "Рис");
+        assertThat(AnswerVerifier.namedBeyondQuestion("Есть только АИ-80 и АИ-92.", terms, "Цена АИ-98?"))
+                .containsExactly("АИ-80", "АИ-92");
+        assertThat(AnswerVerifier.namedBeyondQuestion("Марки АИ-98 в данных нет.", terms, "Цена АИ-98?")).isEmpty();
+    }
+
+    @Test
+    void noAnswerRepliesMayRepeatWhatTheQuestionNamed() {
+        assertThat(AnswerVerifier.namedBeyondQuestion("Причин роста цен на АИ-92 в данных нет.",
+                List.of("АИ-92"), "Почему подорожал АИ-92?")).isEmpty();
+    }
+
+    @Test
+    void noAnswerCheckDoesNotMatchInsideOtherWords() {
+        assertThat(AnswerVerifier.namedBeyondQuestion("Рисков и прогнозов в данных нет.", List.of("Рис"), "Какие риски?"))
+                .isEmpty();
+    }
+
+    @Test
+    void noAnswerRepliesMayNotOfferASimilarCompany() {
+        List<String> candidates = List.of("\"Sheto‘zo Industriya\" MChJ");
+        assertThat(AnswerVerifier.namedBeyondQuestion("Похожая компания: \"Sheto'zo Industriya\" MChJ.",
+                candidates, "Сколько продала «Sheto‘zo Kimyo» MChJ?")).hasSize(1);
+    }
+
+    @Test
     void ignoresDigitsInsideProductCodes() {
         assertThat(check("Бензин АИ-92 и марка PP-2310 продавались.").ok()).isTrue();
     }
