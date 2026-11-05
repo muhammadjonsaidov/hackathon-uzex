@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       AGENT_DB_USER: ${AGENT_DB_USER}
       AGENT_DB_PASSWORD: ${AGENT_DB_PASSWORD}
+      APP_DB_USER: ${APP_DB_USER}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
       # The builtin provider gives correct Cyrillic lower()/ILIKE on Alpine's musl libc.
       POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8 --encoding=UTF8
     command:

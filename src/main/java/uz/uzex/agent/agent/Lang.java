@@ -60,6 +60,17 @@ public enum Lang {
         this.stepThinking = stepThinking;
     }
 
+    /**
+     * Questions set the language. A question with no ordinary words, such as a code or a company
+     * name in capitals, says nothing about it, so the chat's language decides.
+     */
+    public static Lang detect(String question, Lang chatLanguage) {
+        boolean noWords = question != null
+                && count(LOWER_LATIN_WORD, question) == 0
+                && count(LOWER_CYRILLIC_WORD, question) == 0;
+        return noWords && chatLanguage != null ? chatLanguage : detect(question);
+    }
+
     public static Lang detect(String question) {
         if (question == null) {
             return RU;

@@ -45,6 +45,19 @@ class LangTest {
     }
 
     @Test
+    void aQuestionWithNoWordsFollowsTheChatLanguage() {
+        assertThat(Lang.detect("BK001", Lang.RU)).isEqualTo(Lang.RU);
+        assertThat(Lang.detect("TOHER GROUP?", Lang.RU)).isEqualTo(Lang.RU);
+        assertThat(Lang.detect("БРОКЕР BK001?", Lang.UZ_LATN)).isEqualTo(Lang.UZ_LATN);
+    }
+
+    @Test
+    void wordsInTheQuestionOutrankTheChatLanguage() {
+        assertThat(Lang.detect("2025-yilda nechta bitim bor?", Lang.RU)).isEqualTo(Lang.UZ_LATN);
+        assertThat(Lang.detect("Сколько сделок?", Lang.UZ_LATN)).isEqualTo(Lang.RU);
+    }
+
+    @Test
     void detectsUzbekCyrillic() {
         assertThat(Lang.detect("2025 йилда нечта битим бўлган?")).isEqualTo(Lang.UZ_CYRL);
         assertThat(Lang.detect("Неча битим бор?")).isEqualTo(Lang.UZ_CYRL);

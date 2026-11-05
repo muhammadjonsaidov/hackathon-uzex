@@ -63,9 +63,9 @@ public class AgentService {
         this.properties = properties;
     }
 
-    public AgentResponse ask(String question, List<Turn> history, ProgressListener progress) {
+    public AgentResponse ask(String question, List<Turn> history, Lang chatLanguage, ProgressListener progress) {
         long start = System.nanoTime();
-        Lang lang = Lang.detect(question);
+        Lang lang = Lang.detect(question, chatLanguage);
         Trace trace = new Trace();
         if (!properties.llmConfigured()) {
             return system("ERROR", lang.llmError, lang, trace, start);
