@@ -32,20 +32,58 @@ body {
   color: var(--ink);
   font: 400 16px/1.5 var(--sans);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns:
+    var(--rail-width, 0px)
+    minmax(0, 1fr)
+    10px
+    clamp(280px, var(--proof-width, 46vw), calc(100vw - var(--rail-width, 0px) - 360px));
+  grid-template-rows: minmax(0, 1fr);
   height: 100dvh;
 }
+body.rail-open { --rail-width: 250px; }
+body.is-dragging { cursor: col-resize; user-select: none; }
 button, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
 
+/* Chats of the current language */
+.history {
+  grid-column: 1; grid-row: 1; display: none; flex-direction: column; min-height: 0;
+  background: var(--glaze-deep); padding: 20px 12px 16px;
+}
+body.rail-open .history { display: flex; }
+.history h2 { margin: 0 0 12px; padding: 0 8px; font: 500 16px/1.3 var(--serif); color: var(--cobalt); }
+.new-chat {
+  margin: 0 0 12px; padding: 9px 12px; background: #fff; border: 2px solid var(--cobalt); border-radius: 3px;
+  color: var(--cobalt); font-weight: 600; font-size: 14px; text-align: left; cursor: pointer;
+}
+.new-chat:hover { background: var(--cobalt); color: var(--on-cobalt); }
+.chat-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; min-height: 0; flex: 1; }
+.chat-list button {
+  display: block; width: 100%; padding: 8px; background: none; border: 0; border-left: 3px solid transparent;
+  border-radius: 0 3px 3px 0; text-align: left; font-size: 14px; line-height: 1.35; cursor: pointer;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.chat-list button:hover { background: var(--glaze); }
+.chat-list button[aria-current="true"] { background: #fff; border-left-color: var(--cobalt); font-weight: 500; }
+.history .none { margin: 0; padding: 0 8px; font-size: 14px; color: var(--ink-soft); }
+
 /* Asking side */
-.ask { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.ask { grid-column: 2; grid-row: 1; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
 .masthead {
   display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
   padding: 20px 40px 12px;
 }
-.masthead h1 { margin: 0; font: 500 20px/1.2 var(--serif); color: var(--cobalt); }
-.langs { display: flex; gap: 4px; }
+.masthead-start { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+.rail-toggle {
+  flex: none; background: none; border: 0; padding: 4px 10px; border-radius: 3px; cursor: pointer;
+  color: var(--ink-soft); font-weight: 500; font-size: 14px; text-decoration: underline; text-underline-offset: 3px;
+}
+.rail-toggle:hover { color: var(--ink); }
+.masthead h1 {
+  margin: 0; font: 500 20px/1.2 var(--serif); color: var(--cobalt); min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.langs { display: flex; gap: 4px; flex: none; }
 .langs button {
   background: none; border: 0; padding: 4px 10px; cursor: pointer; border-radius: 3px;
   color: var(--ink-soft); font-weight: 500; font-size: 14px;
@@ -96,7 +134,7 @@ button, textarea { font: inherit; color: inherit; }
 .composer { padding: 12px 40px 20px; background: var(--glaze); border-top: 1px solid var(--glaze-deep); }
 .composer form { display: flex; gap: 10px; align-items: flex-end; }
 .composer textarea {
-  flex: 1; min-height: 52px; max-height: 160px; resize: none; padding: 13px 14px;
+  flex: 1; min-width: 0; min-height: 52px; max-height: 160px; resize: none; overflow-y: hidden; padding: 13px 14px;
   background: #fff; border: 2px solid var(--cobalt); border-radius: 3px; line-height: 1.4;
 }
 .composer textarea::placeholder { color: var(--ink-soft); }
@@ -108,8 +146,21 @@ button, textarea { font: inherit; color: inherit; }
 .composer button:disabled { opacity: .55; cursor: progress; }
 .notice { margin: 0 0 10px; color: var(--madder); font-size: 14px; }
 
+/* Drag to share the width between the answer and its evidence */
+.splitter {
+  grid-column: 3; grid-row: 1; position: relative; background: var(--glaze-deep);
+  cursor: col-resize; touch-action: none;
+}
+.splitter::after {
+  content: ""; position: absolute; top: 50%; left: 3px; width: 4px; height: 44px; margin-top: -22px;
+  border-radius: 2px; background: var(--ink-soft);
+}
+.splitter:hover, body.is-dragging .splitter { background: var(--saffron); }
+.splitter:hover::after, body.is-dragging .splitter::after { background: var(--ink); }
+.splitter:focus-visible { outline: 3px solid var(--saffron); outline-offset: -3px; }
+
 /* Evidence side: one tile of solid cobalt */
-.proof { background: var(--cobalt); color: var(--on-cobalt); overflow-y: auto; padding: 24px 40px 40px; min-height: 0; }
+.proof { grid-column: 4; grid-row: 1; background: var(--cobalt); color: var(--on-cobalt); overflow-y: auto; padding: 24px 32px 40px; min-height: 0; min-width: 0; }
 .proof h2 { margin: 0 0 20px; font: 500 20px/1.2 var(--serif); }
 .proof .empty { max-width: 28em; color: var(--on-cobalt-soft); }
 .step { margin: 0 0 32px; }
@@ -134,7 +185,12 @@ td.is-null { color: var(--on-cobalt-soft); }
   html, body { height: auto; }
   body { display: block; height: auto; }
   .ask { display: block; }
+  .splitter { display: none; }
+  .history { padding: 16px; }
+  .chat-list { max-height: 34vh; }
   .masthead { padding: 16px 16px 8px; }
+  .masthead-start { gap: 8px; }
+  .rail-toggle { padding: 4px 0; }
   .thread { overflow: visible; padding: 8px 16px 16px; }
   .intro { padding-top: 16px; }
   .composer { position: sticky; bottom: 0; padding: 10px 16px 12px; }
@@ -146,9 +202,13 @@ td.is-null { color: var(--on-cobalt-soft); }
 </style>
 </head>
 <body>
+<nav class="history" id="history"></nav>
 <main class="ask">
   <header class="masthead">
-    <h1 id="title"></h1>
+    <div class="masthead-start">
+      <button type="button" class="rail-toggle" id="rail-toggle" aria-controls="history"></button>
+      <h1 id="title"></h1>
+    </div>
     <div class="langs" role="group" aria-label="Til / Язык">
       <button type="button" data-lang="ru">RU</button>
       <button type="button" data-lang="uz">UZ</button>
@@ -163,6 +223,7 @@ td.is-null { color: var(--on-cobalt-soft); }
     </form>
   </div>
 </main>
+<div class="splitter" id="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="0" aria-valuemax="100"></div>
 <aside class="proof" id="proof"></aside>
 
 <script>
@@ -193,7 +254,12 @@ const UI = {
     rejected: "Запрос отклонён или завершился ошибкой",
     noKey: "Ключ языковой модели не задан в .env, поэтому вопросы пока не обрабатываются.",
     noDb: "База данных недоступна. Запустите docker compose up -d.",
-    failed: "Не удалось получить ответ от сервера. Проверьте соединение и спросите ещё раз."
+    failed: "Не удалось получить ответ от сервера. Проверьте соединение и спросите ещё раз.",
+    chats: "Чаты",
+    chatsTitle: "Чаты на русском",
+    newChat: "Новый чат",
+    noChats: "Здесь появятся ваши чаты на русском.",
+    resize: "Изменить ширину панелей"
   },
   uz: {
     title: "Birja bitimlari reyestri",
@@ -221,7 +287,12 @@ const UI = {
     rejected: "So‘rov rad etildi yoki xato bilan tugadi",
     noKey: ".env faylida til modeli kaliti ko‘rsatilmagan, shuning uchun savollar hozircha qayta ishlanmaydi.",
     noDb: "Ma’lumotlar bazasi mavjud emas. docker compose up -d ni ishga tushiring.",
-    failed: "Serverdan javob olinmadi. Aloqani tekshiring va qayta so‘rang."
+    failed: "Serverdan javob olinmadi. Aloqani tekshiring va qayta so‘rang.",
+    chats: "Chatlar",
+    chatsTitle: "O‘zbekcha chatlar",
+    newChat: "Yangi chat",
+    noChats: "O‘zbekcha chatlaringiz shu yerda chiqadi.",
+    resize: "Panellar kengligini o‘zgartirish"
   }
 };
 
@@ -254,10 +325,201 @@ function separateList(text) {
   return (intro ? `${intro}\n` : "") + parts.join("\n");
 }
 
-const turns = [];
+/*
+ * Each language keeps its own chats, so switching RU/UZ opens that language's chat instead of
+ * mixing the two. History for the model comes only from the open chat. Chats live in this
+ * browser: if storage is blocked the page still works and they last until a reload.
+ */
+const STORE_KEY = "uzex-chats-v1";
+const MAX_CHATS_PER_LANGUAGE = 20;
+const emptyStore = () => ({ ru: { chats: [], activeId: null }, uz: { chats: [], activeId: null } });
+const store = loadStore();
 let lang = initialLang();
-let selected = null;
 let busy = false;
+
+const space = () => store[lang];
+const currentChat = () => space().chats.find(chat => chat.id === space().activeId) || null;
+const turns = () => (currentChat() ? currentChat().turns : []);
+
+function loadStore() {
+  const fresh = emptyStore();
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (!saved) return fresh;
+    ["ru", "uz"].forEach(code => {
+      const chats = saved[code] && Array.isArray(saved[code].chats) ? saved[code].chats : [];
+      fresh[code].chats = chats.filter(chat => chat && chat.id && Array.isArray(chat.turns)).map(chat => {
+        const done = chat.turns.filter(turn => turn && turn.response);
+        done.forEach(indexCells);
+        return { id: chat.id, title: chat.title, updatedAt: chat.updatedAt, turns: done, selected: done[done.length - 1] || null };
+      }).filter(chat => chat.turns.length);
+      const activeId = saved[code] && saved[code].activeId;
+      fresh[code].activeId = fresh[code].chats.some(chat => chat.id === activeId) ? activeId : null;
+    });
+  } catch (e) { /* unreadable or blocked storage starts empty */ }
+  return fresh;
+}
+
+function storedTurn(turn) {
+  const evidence = (turn.response.evidence || []).map(step => {
+    if (!step.result || step.result.rows.length <= MAX_SHOWN_ROWS) return step;
+    return { ...step, result: { ...step.result, rows: step.result.rows.slice(0, MAX_SHOWN_ROWS), truncated: true } };
+  });
+  return { question: turn.question, response: { ...turn.response, evidence } };
+}
+
+function saveStore() {
+  const snapshot = () => JSON.stringify(Object.fromEntries(["ru", "uz"].map(code => [code, {
+    activeId: store[code].activeId,
+    chats: store[code].chats.map(chat => ({
+      id: chat.id, title: chat.title, updatedAt: chat.updatedAt,
+      turns: chat.turns.filter(turn => turn.response).map(storedTurn)
+    })).filter(chat => chat.turns.length)
+  }])));
+  for (;;) {
+    try {
+      localStorage.setItem(STORE_KEY, snapshot());
+      return;
+    } catch (e) {
+      if (!dropOldestChat()) return;
+    }
+  }
+}
+
+/* Makes room when browser storage is full, never touching a chat that is open. */
+function dropOldestChat() {
+  const candidates = ["ru", "uz"].flatMap(code => store[code].chats
+    .filter(chat => chat.id !== store[code].activeId)
+    .map(chat => ({ code, chat })));
+  if (!candidates.length) return false;
+  const { code, chat } = candidates.reduce((a, b) => (a.chat.updatedAt <= b.chat.updatedAt ? a : b));
+  store[code].chats = store[code].chats.filter(x => x !== chat);
+  return true;
+}
+
+function startChat(question) {
+  const chat = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    title: question.slice(0, 80), updatedAt: Date.now(), turns: [], selected: null
+  };
+  space().chats.unshift(chat);
+  space().activeId = chat.id;
+  while (space().chats.length > MAX_CHATS_PER_LANGUAGE) {
+    space().chats.pop();
+  }
+  return chat;
+}
+
+function openChat(id) {
+  space().activeId = id;
+  saveStore();
+  renderAll();
+  $("proof").scrollTop = 0;
+  scrollToEnd();
+}
+
+function renderHistory() {
+  const t = UI[lang];
+  const box = $("history");
+  box.textContent = "";
+  box.append(el("h2", "", t.chatsTitle));
+  const fresh = el("button", "new-chat", t.newChat);
+  fresh.type = "button";
+  fresh.addEventListener("click", () => {
+    openChat(null);
+    $("input").focus();
+  });
+  box.append(fresh);
+  if (!space().chats.length) {
+    box.append(el("p", "none", t.noChats));
+    return;
+  }
+  const list = el("ul", "chat-list");
+  [...space().chats].sort((a, b) => b.updatedAt - a.updatedAt).forEach(chat => {
+    const li = el("li");
+    const b = el("button", "", chat.title);
+    b.type = "button";
+    b.title = chat.title;
+    if (chat.id === space().activeId) b.setAttribute("aria-current", "true");
+    b.addEventListener("click", () => openChat(chat.id));
+    li.append(b);
+    list.append(li);
+  });
+  box.append(list);
+}
+
+function renderAll() {
+  renderHistory();
+  renderThread();
+  renderProof();
+}
+
+/* Chats panel: open by default where there is room for it */
+function setRailOpen(open, remember) {
+  document.body.classList.toggle("rail-open", open);
+  $("rail-toggle").setAttribute("aria-expanded", String(open));
+  if (remember) {
+    try { localStorage.setItem("uzex-rail", open ? "open" : "closed"); } catch (e) { /* storage may be blocked */ }
+  }
+}
+
+function initialRailOpen() {
+  try {
+    const saved = localStorage.getItem("uzex-rail");
+    if (saved) return saved === "open";
+  } catch (e) { /* storage may be blocked */ }
+  return window.innerWidth >= 1100;
+}
+
+/* The evidence panel's width, kept as a share of the window so it survives a resize */
+const MIN_PROOF_PX = 280;
+const MIN_CHAT_PX = 360;
+
+function setProofWidth(px, remember) {
+  const rail = document.body.classList.contains("rail-open") ? 250 : 0;
+  const max = Math.max(MIN_PROOF_PX, window.innerWidth - rail - MIN_CHAT_PX);
+  const width = Math.min(max, Math.max(MIN_PROOF_PX, px));
+  const share = width / window.innerWidth * 100;
+  document.documentElement.style.setProperty("--proof-width", `${share}vw`);
+  $("splitter").setAttribute("aria-valuenow", String(Math.round(share)));
+  if (remember) {
+    try { localStorage.setItem("uzex-proof-width", String(share)); } catch (e) { /* storage may be blocked */ }
+  }
+}
+
+function initSplitter() {
+  const splitter = $("splitter");
+  try {
+    const saved = parseFloat(localStorage.getItem("uzex-proof-width"));
+    if (saved > 0) setProofWidth(saved / 100 * window.innerWidth, false);
+  } catch (e) { /* storage may be blocked */ }
+  if (!splitter.hasAttribute("aria-valuenow")) splitter.setAttribute("aria-valuenow", "46");
+
+  splitter.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    splitter.setPointerCapture(e.pointerId);
+    document.body.classList.add("is-dragging");
+  });
+  splitter.addEventListener("pointermove", e => {
+    if (document.body.classList.contains("is-dragging")) setProofWidth(window.innerWidth - e.clientX - 5, false);
+  });
+  const stop = e => {
+    if (!document.body.classList.contains("is-dragging")) return;
+    document.body.classList.remove("is-dragging");
+    setProofWidth(window.innerWidth - e.clientX - 5, true);
+  };
+  splitter.addEventListener("pointerup", stop);
+  splitter.addEventListener("pointercancel", stop);
+  splitter.addEventListener("dblclick", () => setProofWidth(window.innerWidth * 0.46, true));
+  splitter.addEventListener("keydown", e => {
+    const step = e.shiftKey ? 96 : 24;
+    const width = $("proof").offsetWidth;
+    if (e.key === "ArrowLeft") setProofWidth(width + step, true);
+    else if (e.key === "ArrowRight") setProofWidth(width - step, true);
+    else return;
+    e.preventDefault();
+  });
+}
 
 function initialLang() {
   try {
@@ -275,9 +537,12 @@ function setLang(next) {
   $("title").textContent = t.title;
   $("input").placeholder = t.placeholder;
   $("send").textContent = t.send;
+  $("rail-toggle").textContent = t.chats;
+  $("splitter").setAttribute("aria-label", t.resize);
   document.querySelectorAll(".langs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === next)));
-  renderThread();
-  renderProof();
+  renderAll();
+  $("proof").scrollTop = 0;
+  scrollToEnd();
   loadStatus();
 }
 
@@ -358,7 +623,7 @@ function renderThread() {
   const thread = $("thread");
   thread.textContent = "";
   const t = UI[lang];
-  if (!turns.length) {
+  if (!turns().length) {
     const intro = el("div", "intro");
     intro.append(el("p", "", t.intro));
     const list = el("ul", "examples");
@@ -374,7 +639,7 @@ function renderThread() {
     thread.append(intro);
     return;
   }
-  turns.forEach(turn => thread.append(renderTurn(turn)));
+  turns().forEach(turn => thread.append(renderTurn(turn)));
 }
 
 function renderTurn(turn) {
@@ -392,7 +657,7 @@ function renderTurn(turn) {
   if (r.status === "ERROR") node.classList.add("is-error");
   if (r.status === "NO_DATA") node.classList.add("is-nodata");
   if (r.status === "CLARIFY") node.classList.add("is-clarify");
-  if (turn === selected) node.setAttribute("aria-current", "true");
+  if (currentChat() && turn === currentChat().selected) node.setAttribute("aria-current", "true");
 
   const answer = el("p", "answer");
   renderAnswer(answer, turn);
@@ -423,9 +688,10 @@ function renderTurn(turn) {
 }
 
 function selectTurn(turn) {
-  if (selected === turn) return;
-  selected = turn;
-  turns.forEach(x => {
+  const chat = currentChat();
+  if (!chat || chat.selected === turn) return;
+  chat.selected = turn;
+  chat.turns.forEach(x => {
     if (!x.node) return;
     if (x === turn) x.node.setAttribute("aria-current", "true");
     else x.node.removeAttribute("aria-current");
@@ -439,6 +705,7 @@ function renderProof() {
   const proof = $("proof");
   proof.textContent = "";
   proof.append(el("h2", "", t.proof));
+  const selected = currentChat() ? currentChat().selected : null;
   if (!selected || !selected.response) {
     proof.append(el("p", "empty", t.proofEmpty));
     return;
@@ -501,12 +768,17 @@ async function ask(question) {
   $("send").disabled = true;
   $("input").value = "";
   resizeInput();
-  const history = turns
+  /* A reply may arrive after the user switched language or chat, so it stays tied to these. */
+  const askedIn = lang;
+  const chat = currentChat() || startChat(question);
+  const history = chat.turns
     .filter(x => x.response && x.response.status !== "ERROR")
     .slice(-3)
     .map(x => ({ question: x.question, answer: x.response.answer }));
   const turn = { question, steps: [], response: null };
-  turns.push(turn);
+  chat.turns.push(turn);
+  chat.updatedAt = Date.now();
+  renderHistory();
   renderThread();
   scrollToEnd();
   try {
@@ -519,15 +791,17 @@ async function ask(question) {
     await readEvents(res.body, (event, data) => {
       if (event === "step") {
         turn.steps.push(data.label);
-        renderThread();
-        scrollToEnd();
+        if (chat === currentChat()) {
+          renderThread();
+          scrollToEnd();
+        }
       } else if (event === "final") {
-        finish(turn, data);
+        finish(chat, turn, data);
       }
     });
     if (!turn.response) throw new Error("Stream ended without an answer");
   } catch (e) {
-    finish(turn, { status: "ERROR", answer: UI[lang].failed, assumptions: [], evidence: [], durationMs: 0 });
+    finish(chat, turn, { status: "ERROR", answer: UI[askedIn].failed, assumptions: [], evidence: [], durationMs: 0 });
   } finally {
     busy = false;
     $("send").disabled = false;
@@ -535,10 +809,14 @@ async function ask(question) {
   }
 }
 
-function finish(turn, response) {
+function finish(chat, turn, response) {
   turn.response = response;
   indexCells(turn);
-  selected = turn;
+  chat.selected = turn;
+  chat.updatedAt = Date.now();
+  saveStore();
+  renderHistory();
+  if (chat !== currentChat()) return;
   renderThread();
   renderProof();
   $("proof").scrollTop = 0;
@@ -590,6 +868,7 @@ function resizeInput() {
   const input = $("input");
   input.style.height = "auto";
   input.style.height = `${Math.min(input.scrollHeight + 4, 160)}px`;
+  input.style.overflowY = input.scrollHeight + 4 > 160 ? "auto" : "hidden";
 }
 
 $("form").addEventListener("submit", e => {
@@ -605,6 +884,12 @@ $("input").addEventListener("keydown", e => {
   }
 });
 document.querySelectorAll(".langs button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+$("rail-toggle").addEventListener("click", () => {
+  setRailOpen(!document.body.classList.contains("rail-open"), true);
+  setProofWidth($("proof").offsetWidth, false);
+});
+setRailOpen(initialRailOpen(), false);
+initSplitter();
 setLang(lang);
 </script>
 </body>
