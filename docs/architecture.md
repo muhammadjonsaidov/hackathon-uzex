@@ -81,10 +81,30 @@ The rules require the prototype to work without registration, so accounts are op
 - **Passwords:** BCrypt with strength 12. Sign-in gives the same refusal and does the same work for a wrong password and an unknown username.
 - **Limits:** attempts are limited per address and per username.
 
+## Deployment
+
+```mermaid
+flowchart LR
+    V[Visitor] -->|HTTPS| C[Cloudflare]
+    C -->|outbound tunnel| T[cloudflared]
+    T --> A[app on 127.0.0.1:8080]
+    A --> D[(PostgreSQL on 127.0.0.1)]
+```
+
+The public site runs on one Ubuntu VM, with three containers started by Docker Compose: the database, the app and `cloudflared`. There is no Dockerfile. The app container runs the built jar on a stock Java 25 image.
+
+- **No ports opened for the site:** the tunnel connects out to Cloudflare, so visitors never connect to the server directly. The app and the database listen only on `127.0.0.1`.
+- **Visitor address:** only the tunnel can reach the app, so rate limits use Cloudflare's `CF-Connecting-IP` header. `X-Forwarded-For` is ignored there, because a visitor can write its first value.
+- **Secrets:** the tunnel token is in its own file, separate from `.env`, so the app never receives it. Both files are readable only by their owner and stay out of git.
+- **Restarts:** the containers restart with Docker, and the VM starts when its host computer starts.
+- **Server-only settings:** the Compose additions for this server are kept on the server, not in this repository.
+- **Cloudflare settings:** JS and CSS stay in Cloudflare's cache for up to 4 hours, so purge it after changing the code. Rocket Loader stays off, because it rewrites scripts that the Content Security Policy protects.
+
 ## Decisions
 
 | Decision | Why | Cost |
 |---|---|---|
+| Cloudflare Tunnel rather than opening router ports | The server sits behind NAT, and a tunnel needs no router access or public address | Depends on Cloudflare, and on the domain's nameservers pointing there |
 | SQL tools rather than embeddings | Exact totals need real aggregation over 500,000 rows | Depends on the model writing correct SQL, which the verifier does not judge |
 | Code verifies answers, not the model | A prompt cannot guarantee anything | Rare correct drafts go to repair or to the raw table |
 | Derived values stored as columns | The model selects correct values instead of working out currency, lots and annulled deals | The schema is wider and needs a rebuild to change |
@@ -94,7 +114,8 @@ The rules require the prototype to work without registration, so accounts are op
 ## Known limits
 
 - The verifier checks figures and names, not meaning. A correct number from the wrong query, or a wrong sentence with no figures in it, can still pass.
-- One machine runs everything. Scaling out would need shared rate limits.
+- One VM runs everything, on one host computer connected over Wi-Fi. If the host, its power or its network fails, the site stops. Scaling out would need shared rate limits.
+- The full restart chain from host to VM to containers has not been tested with a real reboot.
 - Registered users cannot reset a forgotten password or delete their account yet.
 - Reloading a guest's page in one tab clears the guest's chats in its other tabs. The next question there starts a new chat, without the earlier context.
 - Cross-site protection relies on SameSite=Lax cookies and JSON request bodies, without separate CSRF tokens.

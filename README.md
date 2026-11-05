@@ -1,6 +1,8 @@
 # UZEX deals agent
 
-A web service that answers questions about the exchange's 500,000 deals in Russian and Uzbek, using only the published data. Each answer shows the SQL behind it and the result table, and hovering over a figure highlights its source cell.
+A web service that answers questions about the exchange's 500,000 deals in Russian and Uzbek, using only the published data. Each answer shows the SQL behind it and the result table. Hovering over a figure, or tapping it on a phone, highlights its source cell.
+
+The public site is https://uzlaunch.uz, and the chat is at https://uzlaunch.uz/chat.
 
 ## Run
 
@@ -26,15 +28,17 @@ To rebuild the database from scratch:
 docker compose down -v
 ```
 
-## Public URL
+## Public site
 
-Tailscale Funnel gives the app a public `https://` address. Run this in a second terminal and leave it running:
+The site runs on a small Ubuntu server, with the database, the app and a Cloudflare Tunnel in Docker. The server needs no open ports, because the tunnel connects out to Cloudflare. See [Deployment](docs/architecture.md#deployment) for how it is set up.
+
+The server must stay running for as long as the judges test. After changing the code on the server, purge the Cloudflare cache, because it keeps JS and CSS for up to 4 hours.
+
+For a quick public address from your own machine, Tailscale Funnel also works. Run this in a second terminal and leave it running:
 
 ```bash
 tailscale funnel 8080
 ```
-
-The machine and the app must stay running for as long as the judges test.
 
 ## Users and chats
 
@@ -78,7 +82,7 @@ The data rules live in `db/init/02_model.sql` as precomputed columns, so the LLM
 
 ## Tests
 
-Unit tests for the SQL guard, the verifier and language detection:
+Unit tests for the agent's flow with a scripted model, the SQL guard, the verifier, language detection, credentials, chat titles and rate limits:
 
 ```bash
 ./gradlew test
