@@ -111,10 +111,36 @@ h1 {
 .bottom { padding: 20px clamp(16px, 4vw, 56px); border-top: 1px solid var(--glaze-deep); }
 .bottom p { margin: 0; max-width: 62em; font-size: 14px; color: var(--ink-soft); }
 
-@media (max-width: 900px) {
-  .top { position: static; width: auto; padding: 16px; }
+/* Tablets in portrait: text and demo stack, with room left for the steps to stay side by side. */
+@media (max-width: 899px) {
+  .top { position: static; width: auto; padding: 16px 24px; }
   .hero { display: block; min-height: 0; }
-  .hero-text { padding: 24px 16px 40px; }
-  .demo { padding: 32px 16px; }
-  .steps ol, .refusal { grid-template-columns: minmax(0, 1fr); }
+  .hero-text { padding: 24px 24px 40px; }
+  .demo { padding: 32px 24px; }
+  .refusal { grid-template-columns: minmax(0, 1fr); }
+  h1 { font-size: clamp(36px, 7.5vw, 56px); max-width: none; }
+}
+
+/* Phones */
+@media (max-width: 620px) {
+  .top { padding: 12px 16px; }
+  .brand { font-size: 17px; }
+  .top-actions { gap: 8px; }
+  .hero-text { padding: 12px 16px 32px; }
+  .demo { padding: 28px 16px; }
+  .steps, .refusal, .closing, .bottom { padding-left: 16px; padding-right: 16px; }
+  .steps ol { grid-template-columns: minmax(0, 1fr); }
+  .closing .primary { width: 100%; text-align: center; }
+}
+@media (max-width: 420px) {
+  .ask-box { flex-direction: column; }
+  .ask-box input { flex: none; width: 100%; }
+  .ask-box .primary { width: 100%; }
+}
+
+/* Touch: 16px fields so phones do not zoom in on focus, and links big enough to hit. */
+@media (pointer: coarse) {
+  .ask-box input { font-size: 16px; }
+  .try { gap: 10px 18px; }
+  .langs button { min-height: 36px; min-width: 36px; }
 }

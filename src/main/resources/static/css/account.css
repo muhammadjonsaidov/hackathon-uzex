@@ -16,10 +16,10 @@ a { color: var(--cobalt); text-underline-offset: 3px; }
 h1 { margin: 0 0 24px; font: 400 clamp(30px, 4vw, 40px)/1.15 var(--serif); color: var(--cobalt); }
 label { display: block; margin-bottom: 6px; font-weight: 500; }
 input {
-  display: block; width: 100%; height: 48px; padding: 0 12px;
+  display: block; width: 100%; height: 48px; padding: 0 12px; margin-bottom: 18px;
   background: #fff; border: 2px solid var(--cobalt); border-radius: 3px;
 }
-.field-hint { margin: 6px 0 18px; font-size: 14px; color: var(--ink-soft); }
+.field-hint { margin: -12px 0 18px; font-size: 14px; color: var(--ink-soft); }
 .error { margin: 0 0 14px; color: var(--madder); font-weight: 500; }
 button[type="submit"] {
   width: 100%; height: 50px; border: 0; border-radius: 3px; cursor: pointer;
@@ -28,4 +28,8 @@ button[type="submit"] {
 button[type="submit"]:hover:not(:disabled) { background: var(--cobalt-deep); }
 button[type="submit"]:disabled { opacity: .55; cursor: progress; }
 .switch { margin: 18px 0 6px; }
+@media (pointer: coarse) {
+  input { font-size: 16px; }
+  .langs button { min-height: 36px; min-width: 36px; }
+}
 .guest { margin: 0; }

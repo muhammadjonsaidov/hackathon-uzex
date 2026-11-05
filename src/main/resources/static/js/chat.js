@@ -68,14 +68,23 @@ async function openChat(id) {
   }
   active = chat;
   rememberChat(id);
+  closeDrawer();
+  setPane("answer");
   applyLanguage(chat.lang);
 }
 
 function startNewChat() {
   active = null;
   rememberChat(null);
+  closeDrawer();
+  setPane("answer");
   renderAll();
-  $("input").focus();
+  focusComposer();
+}
+
+/* On touch screens focus opens the keyboard, which would cover the answer. */
+function focusComposer() {
+  if (!window.matchMedia("(pointer: coarse)").matches) $("input").focus();
 }
 
 /* The new name shows at once, and goes back if the server refuses it. */
@@ -186,6 +195,7 @@ function renderAll() {
 
 function renderProof() {
   renderEvidence($("proof"), active ? active.selected : null, UI[lang]);
+  renderPaneTabs();
 }
 
 /* Says a guest's chat will not last, while there is still time to do something about it. */
@@ -200,16 +210,40 @@ function renderGuestNote() {
   note.replaceChildren(`${t.guestNote} `, link);
 }
 
-/* Chats panel: open by default where there is room for it */
+/* Chats panel: a column on large screens, a drawer over the page on smaller ones */
+const drawerScreen = window.matchMedia("(max-width: 1099px)");
+const phoneScreen = window.matchMedia("(max-width: 899px)");
+
 function setRailOpen(open, remember) {
   document.body.classList.toggle("rail-open", open);
   $("rail-toggle").setAttribute("aria-expanded", String(open));
-  if (remember) {
+  if (remember && !drawerScreen.matches) {
     try { localStorage.setItem("uzex-rail", open ? "open" : "closed"); } catch (e) { /* storage may be blocked */ }
   }
 }
 
+function closeDrawer() {
+  if (drawerScreen.matches) setRailOpen(false, false);
+}
+
+/* On a phone the answer and its evidence take turns on one screen. */
+function setPane(pane) {
+  document.body.dataset.pane = pane;
+  document.querySelectorAll("#pane-tabs button").forEach(button => {
+    button.setAttribute("aria-pressed", String(button.dataset.pane === pane));
+  });
+}
+
+function renderPaneTabs() {
+  const t = UI[lang];
+  $("tab-answer").textContent = t.paneAnswer;
+  const selected = active ? active.selected : null;
+  const count = selected ? (selected.response ? selected.response.evidence || [] : selected.live || []).length : 0;
+  $("tab-proof").textContent = count ? `${t.paneProof} (${count})` : t.paneProof;
+}
+
 function initialRailOpen() {
+  if (drawerScreen.matches) return false;
   try {
     const saved = localStorage.getItem("uzex-rail");
     if (saved) return saved === "open";
@@ -243,13 +277,65 @@ function applyLanguage(next) {
   loadStatus();
 }
 
-/* Answers: every traced figure and its source cell light up together, in either direction. */
+/*
+ * Answers: a ranking becomes compact rows with the value on the right, and everything else stays
+ * as text. This changes layout only, so what was checked is what is shown.
+ */
 function renderAnswer(container, turn, fresh) {
   container.textContent = "";
-  const text = separateList(turn.response.answer);
+  const order = { next: 0, fresh };
+  const lines = separateList(turn.response.answer).split("\n");
+  const items = lines.map(line => line.match(/^(\d{1,2})[.)]\s+(.*)$/));
+  if (items.filter(Boolean).length < 2) {
+    appendTraced(container, lines.join("\n"), turn, order);
+    return;
+  }
+  let list = null;
+  lines.forEach((line, i) => {
+    if (!items[i]) {
+      const text = el("p", "answer-text");
+      appendTraced(text, line, turn, order);
+      container.append(text);
+      list = null;
+      return;
+    }
+    if (!list) {
+      list = el("ol", "answer-list");
+      container.append(list);
+    }
+    list.append(rankingRow(items[i][1], items[i][2], turn, order));
+  });
+}
+
+function rankingRow(rank, text, turn, order) {
+  const row = el("li");
+  row.append(el("span", "answer-rank", rank));
+  const { name, value } = splitRankingItem(text);
+  const nameNode = el("span", "answer-name");
+  appendTraced(nameNode, name, turn, order);
+  row.append(nameNode);
+  if (value) {
+    const valueNode = el("span", "answer-value");
+    appendTraced(valueNode, value, turn, order);
+    row.append(valueNode);
+  }
+  return row;
+}
+
+/* "Name — 123 сум" or "Name: 123 сум". Anything else stays whole, to avoid splitting a name. */
+function splitRankingItem(text) {
+  for (const separator of [" — ", " – ", ": "]) {
+    const at = text.lastIndexOf(separator);
+    const value = at > 0 ? text.slice(at + separator.length) : "";
+    if (/\d/.test(value) && value.length <= 48) return { name: text.slice(0, at), value };
+  }
+  return { name: text, value: "" };
+}
+
+/* Adds text to a node, making every number that traces to a result cell a live figure. */
+function appendTraced(container, text, turn, order) {
   const cells = turn.cells || [];
   let last = 0;
-  let position = 0;
   for (const m of text.matchAll(NUMBER)) {
     const before = text[m.index - 1] || "";
     if (/[\p{L}\-.\d]/u.test(before)) continue;
@@ -259,7 +345,7 @@ function renderAnswer(container, turn, fresh) {
     const figure = el("button", "fig", m[0]);
     figure.type = "button";
     figure.dataset.cells = hits.map(c => c.id).join(" ");
-    if (fresh) figure.style.setProperty("--i", position++);
+    if (order.fresh) figure.style.setProperty("--i", order.next++);
     const on = () => { selectTurn(turn); light(hits, true); };
     const off = () => light(hits, false);
     figure.addEventListener("mouseenter", on);
@@ -268,6 +354,7 @@ function renderAnswer(container, turn, fresh) {
     figure.addEventListener("blur", off);
     figure.addEventListener("click", () => {
       on();
+      setPane("proof");
       pin(hits);
     });
     container.append(figure);
@@ -356,31 +443,42 @@ function renderTurn(turn) {
     turn.fresh = false;
   }
 
-  const answer = el("p", "answer");
+  const answer = el("div", "answer");
   renderAnswer(answer, turn, fresh);
   node.append(answer);
-
-  if (r.assumptions && r.assumptions.length) {
-    const list = el("ul", "assumptions");
-    r.assumptions.forEach(a => list.append(el("li", "", a)));
-    node.append(list);
-  }
-  const seconds = formatSeconds(r.durationMs);
-  if (r.status === "GLOSSARY") {
-    node.append(el("p", "check is-plain", `${t.glossary}. ${t.seconds(seconds)}`));
-  } else if (r.source === "FALLBACK") {
-    node.append(el("p", "check is-plain", `${t.fallback}. ${t.seconds(seconds)}`));
-  } else if (r.status === "ANSWER") {
-    node.append(el("p", "check", `✓ ${t.verified}. ${t.seconds(seconds)}`));
-  } else if (r.durationMs) {
-    node.append(el("p", "check is-plain", t.seconds(seconds)));
-  }
-  node.append(turnActions(turn, t));
+  node.append(turnMeta(turn, t));
   return node;
 }
 
+/* Everything about the answer, in one quiet row: its check, its conditions and what to do with it. */
+function turnMeta(turn, t) {
+  const r = turn.response;
+  const meta = el("div", "turn-meta");
+  const seconds = t.secondsShort(formatSeconds(r.durationMs));
+  if (r.status === "GLOSSARY") {
+    meta.append(el("span", "check is-plain", t.glossary));
+  } else if (r.source === "FALLBACK") {
+    meta.append(el("span", "check is-plain", t.fallback));
+  } else if (r.status === "ANSWER") {
+    const check = el("span", "check", `✓ ${t.verifiedShort}, ${seconds}`);
+    check.title = t.verified;
+    meta.append(check);
+  } else if (r.durationMs) {
+    meta.append(el("span", "check is-plain", seconds));
+  }
+  meta.append(...turnActions(turn, t));
+  if (r.assumptions && r.assumptions.length) {
+    const details = el("details", "assumptions");
+    details.append(el("summary", "", t.conditions(r.assumptions.length)));
+    const list = el("ul");
+    r.assumptions.forEach(a => list.append(el("li", "", a)));
+    details.append(list);
+    meta.append(details);
+  }
+  return meta;
+}
+
 function turnActions(turn, t) {
-  const actions = el("div", "turn-actions");
   if (turn.response.status === "ERROR") {
     const retry = el("button", "", t.retry);
     retry.type = "button";
@@ -388,14 +486,15 @@ function turnActions(turn, t) {
       active.turns = active.turns.filter(x => x !== turn);
       ask(turn.question);
     });
-    actions.append(retry);
-    return actions;
+    return [retry];
   }
   const show = el("button", "show-evidence", t.show);
   show.type = "button";
-  show.addEventListener("click", () => selectTurn(turn));
-  actions.append(show, copyButton(t.copyAnswer, t.copied, () => turn.response.answer));
-  return actions;
+  show.addEventListener("click", () => {
+    selectTurn(turn);
+    setPane("proof");
+  });
+  return [show, copyButton(t.copyAnswer, t.copied, () => turn.response.answer)];
 }
 
 function selectTurn(turn) {
@@ -444,6 +543,7 @@ async function ask(question) {
   const turn = { question, steps: [], live: [], response: null, startedAt: Date.now() };
   chat.turns.push(turn);
   chat.selected = turn;
+  setPane("answer");
   renderHistory();
   renderThread();
   renderProof();
@@ -470,7 +570,7 @@ async function ask(question) {
     stopLiveTimer();
     $("send").disabled = false;
     renderHistory();
-    if (document.activeElement === document.body) $("input").focus();
+    if (document.activeElement === document.body) focusComposer();
   }
 }
 
@@ -615,8 +715,18 @@ document.addEventListener("keydown", e => {
 document.querySelectorAll(".langs button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
 $("rail-toggle").addEventListener("click", () => {
   setRailOpen(!document.body.classList.contains("rail-open"), true);
-  setProofWidth($("proof").offsetWidth, false);
+  if (!drawerScreen.matches) setProofWidth($("proof").offsetWidth, false);
 });
+$("rail-backdrop").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !e.target.closest(".chat-row")) closeDrawer();
+});
+document.querySelectorAll("#pane-tabs button").forEach(button => {
+  button.addEventListener("click", () => setPane(button.dataset.pane));
+});
+drawerScreen.addEventListener("change", () => setRailOpen(initialRailOpen(), false));
+phoneScreen.addEventListener("change", () => setPane("answer"));
+setPane("answer");
 setRailOpen(initialRailOpen(), false);
 initSplitter();
 applyLanguage(lang);

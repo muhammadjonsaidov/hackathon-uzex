@@ -113,9 +113,9 @@ body.rail-open .history { display: flex; }
 }
 .examples button:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 
-.turn { padding: 20px 0 24px; border-bottom: 1px solid var(--glaze-deep); max-width: 40em; }
+.turn { padding: 14px 0 12px; border-bottom: 1px solid var(--glaze-deep); max-width: 42em; }
 .turn:last-child { border-bottom: 0; }
-.turn .question { margin: 0 0 10px; color: var(--ink-soft); font-weight: 500; }
+.turn .question { margin: 0 0 6px; color: var(--ink-soft); font-size: 15px; font-weight: 500; line-height: 1.35; }
 .turn .steps { margin: 0; padding: 0; list-style: none; font-size: 15px; }
 .turn .steps li { position: relative; padding: 2px 0 2px 22px; color: var(--ink-soft); }
 .turn .steps li::before { position: absolute; left: 0; }
@@ -127,16 +127,27 @@ body.rail-open .history { display: flex; }
 }
 @keyframes working { from { transform: scale(.55); } to { transform: scale(1.1); } }
 .timer { margin: 8px 0 0 22px; font-size: 14px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-.answer { margin: 0; font: 400 clamp(20px, 1.9vw, 25px)/1.42 var(--serif); white-space: pre-line; }
+.answer { font: 400 clamp(17px, 1.35vw, 19px)/1.42 var(--serif); white-space: pre-line; overflow-wrap: anywhere; }
+.answer-text { margin: 0 0 6px; }
+/* A ranking: rank, name, and the value kept on the right where figures can be compared. */
+.answer-list { list-style: none; margin: 0; padding: 0; }
+.answer-list li {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; padding: 4px 0;
+  border-bottom: 1px solid var(--glaze-deep);
+}
+.answer-list li:last-child { border-bottom: 0; }
+.answer-rank { flex: none; min-width: 1.2em; color: var(--ink-soft); font: 500 13px/1 var(--sans); font-variant-numeric: tabular-nums; }
+.answer-name { flex: 1 1 10em; min-width: 0; }
+.answer-value { flex: none; margin-left: auto; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 /* The one moment of motion: when a checked answer arrives, its figures are underlined in order. */
 /* Backwards only: once finished, hover must be free to change the figure again. */
 .is-fresh .fig { animation: draw-figure 420ms ease-out backwards; animation-delay: calc(var(--i, 0) * 110ms + 120ms); }
 @keyframes draw-figure { from { background-size: 0 3px; } to { background-size: 100% 3px; } }
 .is-fresh .check { animation: appear 300ms ease-out backwards; animation-delay: 300ms; }
 @keyframes appear { from { opacity: 0; } to { opacity: 1; } }
-.turn.is-error .answer { font: 400 18px/1.5 var(--sans); color: var(--madder); }
-.turn.is-nodata .answer { border-left: 4px solid var(--madder); padding-left: 16px; }
-.turn.is-clarify .answer { border-left: 4px solid var(--saffron); padding-left: 16px; }
+.turn.is-error .answer { font: 400 16px/1.5 var(--sans); color: var(--madder); }
+.turn.is-nodata .answer { border-left: 3px solid var(--madder); padding-left: 12px; }
+.turn.is-clarify .answer { border-left: 3px solid var(--saffron); padding-left: 12px; }
 
 .fig {
   all: unset; cursor: pointer; font-variant-numeric: tabular-nums;
@@ -147,15 +158,17 @@ body.rail-open .history { display: flex; }
 .fig:hover, .fig:focus-visible, .fig.is-on { background-size: 100% 100%; }
 .fig:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 2px; }
 
-.assumptions { margin: 14px 0 0; padding: 0; list-style: none; font-size: 15px; color: var(--ink-soft); }
-.assumptions li { padding: 2px 0; }
-.check { margin: 14px 0 0; font-size: 14px; color: var(--turquoise); font-weight: 500; }
+.turn-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin-top: 6px; font-size: 13px; line-height: 1.5; }
+.check { color: var(--turquoise); font-weight: 500; }
 .check.is-plain { color: var(--ink-soft); font-weight: 400; }
-.turn-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; }
-.turn-actions button {
-  background: none; border: 0; padding: 0; color: var(--cobalt); cursor: pointer; font-size: 14px;
+.turn-meta button, .assumptions summary {
+  background: none; border: 0; padding: 0; color: var(--cobalt); cursor: pointer; font: inherit;
   text-decoration: underline; text-underline-offset: 3px;
 }
+.assumptions summary { list-style: none; }
+.assumptions summary::-webkit-details-marker { display: none; }
+.assumptions[open] { flex-basis: 100%; }
+.assumptions ul { margin: 4px 0 2px; padding: 0 0 0 12px; border-left: 2px solid var(--glaze-deep); list-style: none; color: var(--ink-soft); }
 .turn[aria-current="true"] .show-evidence { display: none; }
 
 .composer { padding: 12px 40px 20px; background: var(--glaze); border-top: 1px solid var(--glaze-deep); }
@@ -226,18 +239,87 @@ td.is-source, td.is-pinned { background: var(--saffron); color: var(--ink); box-
 td.is-null { color: var(--on-cobalt-soft); }
 .rows-note { margin: 8px 0 0; color: var(--on-cobalt-soft); font-size: 14px; }
 
-@media (max-width: 900px) {
-  html, body { height: auto; }
-  body { display: block; height: auto; }
-  .ask { display: block; }
+/* Only needed on phones and in the drawer layout. */
+.pane-tabs { display: none; }
+.rail-backdrop { display: none; }
+
+/* Tablets and small laptops: the chats panel becomes a drawer over the page. */
+@media (max-width: 1099px) {
+  body.rail-open { --rail-width: 0px; }
+  .history {
+    position: fixed; inset: 0 auto 0 0; z-index: 3; width: min(300px, 85vw); box-shadow: 2px 0 0 var(--cobalt);
+    padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  body.rail-open .rail-backdrop { display: block; position: fixed; inset: 0; z-index: 2; background: rgba(15, 27, 61, .4); }
+  .masthead { padding: 16px 24px 8px; }
+  .thread { padding: 8px 24px 16px; }
+  .composer { padding: 10px 24px 14px; }
+  .proof { padding: 20px 24px 32px; }
+  .chat-actions { background: linear-gradient(90deg, transparent, var(--glaze-deep) 12px); }
+}
+
+/* Phones: the answer and its evidence take turns on one screen, with tabs in thumb reach. */
+@media (max-width: 899px) {
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: 100dvh;
+  }
+  .ask, .proof { grid-column: 1; grid-row: 1; }
   .splitter { display: none; }
-  .history { padding: 16px; }
-  .chat-list { max-height: 34vh; }
-  .masthead { padding: 16px 16px 8px; }
+  body[data-pane="answer"] .proof { display: none; }
+  body[data-pane="proof"] .ask { display: none; }
+  .pane-tabs {
+    grid-column: 1; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr;
+    padding-bottom: env(safe-area-inset-bottom); background: var(--cobalt-deep);
+  }
+  .pane-tabs button {
+    height: 48px; background: none; border: 0; border-top: 3px solid transparent; cursor: pointer;
+    color: var(--on-cobalt-soft); font-weight: 600; font-size: 15px;
+  }
+  .pane-tabs button[aria-pressed="true"] { color: var(--on-cobalt); border-top-color: var(--saffron); background: var(--cobalt); }
+  .masthead { padding: max(12px, env(safe-area-inset-top)) 16px 6px; gap: 8px; }
   .masthead-start { gap: 8px; }
+  .masthead h1 { font-size: 18px; }
   .rail-toggle { padding: 4px 0; }
-  .thread { overflow: visible; padding: 8px 16px 16px; }
-  .intro { padding-top: 16px; }
-  .composer { position: sticky; bottom: 0; padding: 10px 16px 12px; }
-  .proof { overflow: visible; padding: 24px 16px 32px; }
+  .thread { padding: 4px 16px 10px; }
+  .intro { padding-top: 12px; }
+  .intro p { margin-bottom: 16px; font-size: 21px; }
+  .composer { padding: 8px 16px 10px; }
+  .composer form { gap: 8px; }
+  .composer textarea { min-height: 46px; padding: 10px 12px; }
+  .composer button { height: 46px; padding: 0 16px; }
+  .guest-note { margin-bottom: 6px; font-size: 13px; }
+  .proof { padding: max(16px, env(safe-area-inset-top)) 16px 24px; }
+  .proof h2 { margin-bottom: 14px; font-size: 18px; }
+  .step { margin-bottom: 24px; }
+}
+
+/* Narrow phones: a long value moves under its name instead of squeezing it. */
+@media (max-width: 480px) {
+  .answer-list li { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+  .answer-value { grid-column: 2; margin-left: 0; text-align: left; white-space: normal; }
+}
+
+/* Short screens, such as a phone on its side: leave the room for the answer. */
+@media (max-height: 480px) {
+  .masthead { padding-top: 6px; padding-bottom: 2px; }
+  .guest-note { display: none; }
+  .composer { padding-top: 4px; padding-bottom: 4px; }
+  .composer textarea, .composer button { min-height: 40px; height: 40px; padding-top: 7px; padding-bottom: 7px; }
+  .pane-tabs button { height: 38px; }
+}
+
+/* Touch: controls big enough to hit, and 16px fields so phones do not zoom in on focus. */
+@media (pointer: coarse) {
+  .langs button { min-height: 36px; min-width: 36px; }
+  .chat-open { min-height: 44px; align-items: center; }
+  .chat-action { width: 38px; height: 38px; }
+  .chat-action svg { width: 18px; height: 18px; }
+  .rename-input, .chat-search { height: 42px; font-size: 16px; }
+  .turn-meta { font-size: 14px; gap: 6px 16px; }
+  .turn-meta button, .assumptions summary { padding: 3px 0; }
+  .new-chat { min-height: 44px; }
+  .account-actions a, .account-actions button { display: inline-block; padding: 6px 0; }
 }

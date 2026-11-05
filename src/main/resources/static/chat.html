@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>UZEX Reyestr Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +12,7 @@
 </head>
 <body class="chat-page">
 <nav class="history" id="history"></nav>
+<div class="rail-backdrop" id="rail-backdrop"></div>
 <main class="ask">
   <header class="masthead">
     <div class="masthead-start">
@@ -35,6 +36,10 @@
 </main>
 <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="0" aria-valuemax="100"></div>
 <aside class="proof" id="proof"></aside>
+<div class="pane-tabs" id="pane-tabs" role="group">
+  <button type="button" data-pane="answer" id="tab-answer"></button>
+  <button type="button" data-pane="proof" id="tab-proof"></button>
+</div>
 
 <script type="module" src="/js/chat.js"></script>
 </body>

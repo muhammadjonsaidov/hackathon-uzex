@@ -5,7 +5,8 @@ const MIN_PROOF_PX = 280;
 const MIN_CHAT_PX = 360;
 
 export function setProofWidth(px, remember) {
-  const rail = document.body.classList.contains("rail-open") ? 250 : 0;
+  const railIsColumn = document.body.classList.contains("rail-open") && !window.matchMedia("(max-width: 1099px)").matches;
+  const rail = railIsColumn ? 250 : 0;
   const max = Math.max(MIN_PROOF_PX, window.innerWidth - rail - MIN_CHAT_PX);
   const width = Math.min(max, Math.max(MIN_PROOF_PX, px));
   const share = width / window.innerWidth * 100;
