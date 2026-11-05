@@ -96,6 +96,7 @@ The public site runs on one Ubuntu VM, with three containers started by Docker C
 - **No ports opened for the site:** the tunnel connects out to Cloudflare, so visitors never connect to the server directly. The app and the database listen only on `127.0.0.1`.
 - **Visitor address:** only the tunnel can reach the app, so rate limits use Cloudflare's `CF-Connecting-IP` header. `X-Forwarded-For` is ignored there, because a visitor can write its first value.
 - **Secrets:** the tunnel token is in its own file, separate from `.env`, so the app never receives it. Both files are readable only by their owner and stay out of git.
+- **Slow LLM calls:** on the server a call gets 15 seconds and up to 3 retries, so a hung call is retried soon and all four tries stay inside the 75-second deadline. If they all fail, the page says the model is unavailable and shows no answer.
 - **Restarts:** the containers restart with Docker, and the VM starts when its host computer starts.
 - **Server-only settings:** the Compose additions for this server are kept on the server, not in this repository.
 - **Cloudflare settings:** JS and CSS stay in Cloudflare's cache for up to 4 hours, so purge it after changing the code. Rocket Loader stays off, because it rewrites scripts that the Content Security Policy protects.

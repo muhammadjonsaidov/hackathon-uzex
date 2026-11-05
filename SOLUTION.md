@@ -18,7 +18,7 @@ Birja bitimlari bo‘yicha rus va o‘zbek tillarida (lotin va kirill) javob ber
 - Ilova kodini ko‘rmasdan yozilgan 40 ta savoldan iborat ko‘r imtihon. Birinchi o‘tkazishda 39/40. Xatolar tuzatilgach qayta o‘tkazildi: 40/40 (bu savollar endi ko‘r emas, shuning uchun asosiy ko‘rsatkich birinchi natijadir).
 - Javobi yo‘q 26 ta holatning barchasida (10 tasi ko‘r imtihonda, 16 tasi o‘z savollarimizda) agent hech narsa o‘ylab topmadi.
 - Javoblar qo‘lda ham o‘qib chiqildi, shu tarzda avtomatik baholash ko‘rmaydigan xatolar topildi va tuzatildi.
-- Ishlaydigan serverdagi oxirgi sinovda (40 ta savol) eng sekin javob 8,0 soniya (cheklov 90 soniya).
+- Ishlaydigan serverdagi oxirgi sinovda ikkala to‘plam ham o‘tdi (62/62 va 40/40), eng sekin javob 6,1 soniya (cheklov 90 soniya). Bundan oldingi sinovda LLM javobi kechikkanda bitta savol 75 soniyalik muddatga ulgurmadi: agent raqam o‘ylab topmadi va qayta urinishni so‘radi. Shundan keyin javob bermayotgan LLM so‘rovi 15 soniyada qayta yuboriladigan qilindi.
 
 ---
 
@@ -42,4 +42,4 @@ Birja bitimlari bo‘yicha rus va o‘zbek tillarida (lotin va kirill) javob ber
 - Слепой экзамен из 40 вопросов, написанных без доступа к коду приложения. Первый прогон: 39/40. После исправления ошибок повторный прогон: 40/40 (эти вопросы уже не слепые, поэтому честный показатель — первый результат).
 - Во всех 26 случаях без ответа в данных (10 в слепом экзамене, 16 в своих вопросах) агент ничего не выдумал.
 - Ответы также прочитаны вручную, что позволило найти и исправить ошибки, которые автоматическая оценка не видит.
-- В последнем прогоне на рабочем сервере (40 вопросов) самый медленный ответ: 8,0 секунды (лимит 90 секунд).
+- В последнем прогоне на рабочем сервере прошли оба набора (62/62 и 40/40), самый медленный ответ: 6,1 секунды (лимит 90 секунд). В предыдущем прогоне, когда ответ LLM задержался, один вопрос не уложился в срок 75 секунд: агент не выдумал чисел и попросил повторить вопрос. После этого неотвечающий запрос к LLM повторяется через 15 секунд.
